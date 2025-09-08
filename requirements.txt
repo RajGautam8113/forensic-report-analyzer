@@ -1,8 +1,10 @@
 streamlit
+flask
 scikit-learn
 pandas
 transformers
 spacy
-tesseract
 pillow
-streamlit flask scikit-learn pandas transformers spacy pillow pytesseract
+pytesseract
+gunicorn
+
