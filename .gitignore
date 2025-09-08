@@ -1,0 +1,10 @@
+data/
+notebooks/
+*.csv
+*.pkl
+*.h5
+*.jpg
+*.png
+__pycache__/
+*.pyc
+.env
