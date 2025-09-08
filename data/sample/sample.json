@@ -1,0 +1,53 @@
+{
+  "Patient_ID": "CASE_0057",
+  "Age": 34,
+  "Gender": "Male",
+  "Date_of_Incident": "2025-08-20",
+  "Time_of_Incident": "18:25",
+  "Report_Date": "2025-08-21",
+  "Report_Location": "Apollo Hospital, Delhi",
+  "Type_of_Event": "Accident",
+  "Location_of_Event": "Highway NH8",
+  "Witness_Statements": "No eye-witness; police recovered shattered helmet",
+  "Police/FIR_Summary": "Filed complaint under Section 304A",
+  "Pre-existing_Medical_History": "Diabetes, hypertension",
+  "Injury_List": [
+    {
+      "Injury_Type": "Fracture",
+      "Body_Part": "Skull",
+      "Severity": "Severe",
+      "Age_of_Injury": "Recent",
+      "Description": "Compound fracture; bleeding observed",
+      "Photo": "images/CASE_0057_head.jpg"
+    }
+  ],
+  "Symptom_List": [
+    {"Symptom": "Unconsciousness", "Duration": "Immediate"}
+  ],
+  "Lab_Test_Results": {
+    "CBC": "Hemoglobin 9.2, Platelets 130K",
+    "Toxins/Drugs": "None detected",
+    "Alcohol": "Not detected",
+    "Enzyme markers": "ALT 38",
+    "Pathology_Notes": "Severe cerebral hemorrhage"
+  },
+  "Autopsy_Findings": [
+    {"Organ_Examined": "Brain", "Condition": "Hemorrhage", "Comments": "Fresh blood observed"}
+  ],
+  "Admission_Time": "2025-08-20 18:40",
+  "Procedures": [
+    {"Procedure_Name": "CPR", "Time_Performed": "18:41", "Outcome": "No Response"}
+  ],
+  "Time_to_Death": "15 minutes",
+  "Doctor_Comments": "Injury pattern matches accident but helmet damage suggests possible prior assault.",
+  "Specialist_Notes": "",
+  "Official_Cause_of_Death": "Accident",
+  "ML_Predicted_Cause": "",
+  "Confidence_Score": "",
+  "Anomaly_Flag": "",
+  "Explainability": [],
+  "Source_Type": "Forensic",
+  "Uploader_ID": "ADMIN",
+  "Timestamp": "2025-08-21 10:14",
+  "Data_Privacy_Status": "Anonymized"
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Forensic Report Upload</title>
+<style>
+  /* Styling as before for perfect forensic theme */
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono&display=swap');
+  body, html {
+      margin: 0; padding: 0; min-height: 100vh;
+      font-family: 'Roboto Mono', monospace;
+      background: radial-gradient(ellipse at center, #0f192a 0%, #030712 100%);
+      color: #a0c7ff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      overflow: auto;
+  }
+  .container {
+      background: linear-gradient(145deg, #112e54, #0a1a2e);
+      border-radius: 20px;
+      width: 80vw;
+      max-width: 1200px;
+      padding: 40px 35px;
+      margin: 40px 0 40px 0;
+      box-shadow: 0 0 20px #3f8cff55, inset 0 0 20px #074a93;
+      border: 2px solid #2a5688;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+      text-align: center;
+      height: auto;
+      max-height: none;
+  }
+  h1 {
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      font-size: 2.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin: 0 0 30px;
+      color: #33a1ff;
+      text-shadow: 0 0 8px #33a1ff, 0 0 20px #0a94ff;
+      user-select: none;
+  }
+  form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      align-items: center;
+  }
+  input[type="file"] {
+      background: #0f2a5e;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      color: #aae3ff;
+      padding: 15px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.3s ease, background-color 0.3s ease;
+  }
+  input[type="file"]:hover {
+      border-color: #33a1ff;
+      background: #112f6f;
+  }
+  input[type="file"]:focus {
+      outline: none;
+      border-color: #66c0ff;
+      background: #0f3d8d;
+  }
+  input[type="submit"] {
+      background: linear-gradient(90deg, #1b3e80, #33a1ff);
+      border-radius: 15px;
+      border: none;
+      color: #e0f0ff;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 15px 0;
+      cursor: pointer;
+      font-family: 'Orbitron', monospace;
+      letter-spacing: 0.05em;
+      box-shadow: 0 0 12px #33a1ff, 0 0 45px #33a1ff;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+  }
+  input[type="submit"]:hover {
+      background: linear-gradient(90deg, #3689ff, #6ec1ff);
+      box-shadow: 0 0 22px #66c0ff, 0 0 50px #33a1ff;
+  }
+  .flash {
+      background-color: #1f233d;
+      border-radius: 15px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      color: #ff8080;
+      font-weight: 700;
+      text-shadow: 0 0 10px #ff5c5c;
+      box-shadow: 0 0 15px #ff6060cc inset;
+      user-select: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Forensic Report Upload</h1>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="flash">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}">
+    <input type="file" name="file" accept=".pdf,.txt" required />
+    <input type="submit" value="Upload Report" />
+  </form>
+</div>
+</body>
+</html>

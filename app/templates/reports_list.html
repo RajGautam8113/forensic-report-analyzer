@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Saved Forensic Reports</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f1b35; color:#d2e7f7; }
+    table { width: 90%; margin: 30px auto; border-collapse: collapse; }
+    th, td { padding: 12px; border: 1px solid #3e4b72; text-align: center; }
+    th { background-color: #2a3a73; }
+    a { color: #99ccff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    h1 { text-align: center; margin-top: 30px; }
+    .container { max-width: 1200px; margin: auto; }
+    .upload-link { display: block; width: 90%; margin: 20px auto; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Saved Forensic Reports</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Filename</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Date of Death</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+        <tr>
+          <td>{{ r[0] }}</td>
+          <td>{{ r[1] }}</td>
+          <td>{{ r[2] }}</td>
+          <td>{{ r[3] }}</td>
+          <td>{{ r[4] }}</td>
+          <td>{{ r[5] }}</td>
+          <td><a href="{{ url_for('report_detail', report_id=r[0]) }}">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <a href="{{ url_for('upload_file') }}" class="upload-link">Upload New Report</a>
+  </div>
+</body>
+</html>

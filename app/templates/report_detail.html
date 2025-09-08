@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Report Detail - {{ report.filename }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f1b35; color:#d2e7f7; padding: 40px; }
+    h1 { font-weight: 900; text-align: center; margin-bottom: 30px; }
+    ul { max-width: 800px; margin: auto; padding: 0; list-style-type: none; }
+    li { padding: 10px 0; font-size: 1.2em; border-bottom: 1px solid #354565; }
+    strong { color: #99ccff; }
+    pre { background: #1b2a55; padding: 20px; border-radius: 10px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    .back-link { display: block; max-width: 800px; margin: 25px auto; text-align: center; font-weight: bold; color: #99ccff; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Report Details: {{ report.filename }}</h1>
+  <ul>
+    <li><strong>Name:</strong> {{ report.Name }}</li>
+    <li><strong>Age:</strong> {{ report.Age }}</li>
+    <li><strong>Gender:</strong> {{ report.Gender }}</li>
+    <li><strong>Address:</strong> {{ report.Address }}</li>
+    <li><strong>Date of Death:</strong> {{ report['Date of Death'] }}</li>
+    <li><strong>Cause of Death:</strong> {{ report['Cause of Death'] }}</li>
+    <li><strong>Examiner:</strong> {{ report.Examiner }}</li>
+    <li><strong>Extracted Text:</strong> <pre>{{ report.extracted_text }}</pre></li>
+  </ul>
+  <a href="{{ url_for('list_reports') }}" class="back-link">Back to Reports List</a>
+</body>
+</html>
