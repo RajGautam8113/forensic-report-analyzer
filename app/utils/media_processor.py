@@ -1,22 +1,12 @@
 """
 Evidence Media Processor
 Handles image OCR and video keyframe extraction for body condition evidence.
-Uses EasyOCR for text extraction and OpenCV for video frame extraction.
+Uses Tesseract OCR for text extraction and OpenCV for video frame extraction.
 """
 
 import os
-import easyocr
-
-# Lazy-load the EasyOCR reader (it's heavy)
-_ocr_reader = None
-
-
-def _get_ocr_reader():
-    """Get or create the EasyOCR reader (singleton pattern)."""
-    global _ocr_reader
-    if _ocr_reader is None:
-        _ocr_reader = easyocr.Reader(['en'], gpu=False)
-    return _ocr_reader
+import pytesseract
+from PIL import Image
 
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
@@ -50,9 +40,8 @@ def process_evidence_image(filepath):
         str — extracted text (may be empty if no text found)
     """
     try:
-        reader = _get_ocr_reader()
-        results = reader.readtext(filepath, detail=0)
-        return '\n'.join(results).strip()
+        img = Image.open(filepath)
+        return pytesseract.image_to_string(img).strip()
     except Exception as e:
         print(f"[MediaProcessor] OCR error on {filepath}: {e}")
         return ""
@@ -108,7 +97,6 @@ def process_evidence_video(filepath, frame_interval=2, max_frames=10):
             frame_positions.sort()
 
         all_texts = []
-        reader = _get_ocr_reader()
 
         # Create temp dir for frames
         temp_dir = os.path.join(os.path.dirname(filepath), '_temp_frames')
@@ -125,10 +113,10 @@ def process_evidence_video(filepath, frame_interval=2, max_frames=10):
                 frame_path = os.path.join(temp_dir, f'frame_{idx}.jpg')
                 cv2.imwrite(frame_path, frame)
 
-                # Run OCR
+                # Run OCR with Tesseract
                 try:
-                    results = reader.readtext(frame_path, detail=0)
-                    text = '\n'.join(results).strip()
+                    img = Image.open(frame_path)
+                    text = pytesseract.image_to_string(img).strip()
                     if text:
                         all_texts.append(f"[Frame at {frame_num/fps:.1f}s] {text}")
                 except Exception as e:

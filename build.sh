@@ -3,10 +3,10 @@
 
 set -o errexit
 
-# Install CPU-only PyTorch (saves ~1.5GB vs GPU version)
-pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# Install Tesseract OCR (system dependency for pytesseract)
+apt-get update && apt-get install -y --no-install-recommends tesseract-ocr && rm -rf /var/lib/apt/lists/*
 
-# Install all other dependencies
+# Install Python dependencies
 pip install --no-cache-dir -r requirements.txt
 
 # Download spaCy language model

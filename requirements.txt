@@ -7,7 +7,8 @@ PyYAML==6.0.2
 gunicorn==23.0.0
 requests==2.32.5
 numpy==2.2.6
-easyocr==1.7.2
+pytesseract==0.3.13
+Pillow==11.2.1
 scipy==1.16.1
 scikit-image==0.25.2
 Pygments==2.19.2

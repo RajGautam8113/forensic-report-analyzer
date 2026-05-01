@@ -10,7 +10,8 @@ from utils.nlp_utils import extract_forensic_info, extract_entities, extract_inj
 from utils.cross_verifier import cross_verify, extract_injuries_from_report_text
 from utils.media_processor import process_evidence_file, get_media_type
 from docx import Document
-import easyocr
+import pytesseract
+from PIL import Image
 
 load_dotenv()
 
@@ -64,9 +65,8 @@ def extract_report_text(filepath):
             return ""
     elif ext in [".jpg", ".jpeg", ".png", ".bmp", ".tiff"]:
         try:
-            reader = easyocr.Reader(['en'])
-            result = reader.readtext(filepath, detail=0)
-            return '\n'.join(result)
+            img = Image.open(filepath)
+            return pytesseract.image_to_string(img)
         except Exception as e:
             print(f"OCR error: {e}")
             return ""
