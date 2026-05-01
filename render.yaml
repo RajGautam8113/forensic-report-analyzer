@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: forensic-report-analyzer
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+    disk:
+      name: forensic-data
+      mountPath: /app/app/data
+      sizeGB: 1

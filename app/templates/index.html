@@ -1,121 +1,574 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Forensic Report Upload</title>
-<style>
-  /* Styling as before for perfect forensic theme */
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono&display=swap');
-  body, html {
-      margin: 0; padding: 0; min-height: 100vh;
-      font-family: 'Roboto Mono', monospace;
-      background: radial-gradient(ellipse at center, #0f192a 0%, #030712 100%);
-      color: #a0c7ff;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      overflow: auto;
-  }
-  .container {
-      background: linear-gradient(145deg, #112e54, #0a1a2e);
-      border-radius: 20px;
-      width: 80vw;
-      max-width: 1200px;
-      padding: 40px 35px;
-      margin: 40px 0 40px 0;
-      box-shadow: 0 0 20px #3f8cff55, inset 0 0 20px #074a93;
-      border: 2px solid #2a5688;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      user-select: none;
-      text-align: center;
-      height: auto;
-      max-height: none;
-  }
-  h1 {
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      font-size: 2.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      margin: 0 0 30px;
-      color: #33a1ff;
-      text-shadow: 0 0 8px #33a1ff, 0 0 20px #0a94ff;
-      user-select: none;
-  }
-  form {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      align-items: center;
-  }
-  input[type="file"] {
-      background: #0f2a5e;
-      border-radius: 12px;
-      border: 2px solid transparent;
-      color: #aae3ff;
-      padding: 15px 20px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: border-color 0.3s ease, background-color 0.3s ease;
-  }
-  input[type="file"]:hover {
-      border-color: #33a1ff;
-      background: #112f6f;
-  }
-  input[type="file"]:focus {
-      outline: none;
-      border-color: #66c0ff;
-      background: #0f3d8d;
-  }
-  input[type="submit"] {
-      background: linear-gradient(90deg, #1b3e80, #33a1ff);
-      border-radius: 15px;
-      border: none;
-      color: #e0f0ff;
-      font-weight: 700;
-      font-size: 1.2rem;
-      padding: 15px 0;
-      cursor: pointer;
-      font-family: 'Orbitron', monospace;
-      letter-spacing: 0.05em;
-      box-shadow: 0 0 12px #33a1ff, 0 0 45px #33a1ff;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-  }
-  input[type="submit"]:hover {
-      background: linear-gradient(90deg, #3689ff, #6ec1ff);
-      box-shadow: 0 0 22px #66c0ff, 0 0 50px #33a1ff;
-  }
-  .flash {
-      background-color: #1f233d;
-      border-radius: 15px;
-      padding: 15px 20px;
-      margin-bottom: 20px;
-      color: #ff8080;
-      font-weight: 700;
-      text-shadow: 0 0 10px #ff5c5c;
-      box-shadow: 0 0 15px #ff6060cc inset;
-      user-select: none;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered forensic report cross-verification — detect tampering in postmortem reports by comparing with on-the-spot body conditions.">
+    <title>Forensic Report Analyzer — Cross-Verification System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        /* Multi-step form styles */
+        .step { display: none; }
+        .step.active { display: block; animation: fadeInUp 0.5s both; }
+        .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 28px; }
+        .step-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(0,229,255,0.15); border: 2px solid rgba(0,229,255,0.3); transition: all 0.3s; }
+        .step-dot.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 12px var(--primary); }
+        .step-dot.done { background: var(--success); border-color: var(--success); box-shadow: 0 0 10px var(--success); }
+        .step-label { text-align: center; font-family: 'Orbitron', monospace; font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.1em; }
+        .step-dot-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 80px; }
+
+        /* Injury entries */
+        .injury-entry { background: rgba(0,229,255,0.03); border: 1px solid rgba(0,229,255,0.1); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; animation: fadeInUp 0.3s both; position: relative; }
+        .injury-entry:hover { border-color: var(--glass-border); }
+        .injury-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-family: 'Orbitron', monospace; font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        .form-input, .form-select, .form-textarea {
+            background: rgba(3, 13, 36, 0.8); border: 1px solid rgba(0,229,255,0.15);
+            border-radius: var(--radius-sm); color: var(--text-primary); padding: 10px 14px;
+            font-family: 'Inter', sans-serif; font-size: 0.9rem; transition: all 0.3s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none; border-color: var(--primary); box-shadow: 0 0 15px rgba(0,229,255,0.1);
+        }
+        .form-select { cursor: pointer; }
+        .form-textarea { min-height: 100px; resize: vertical; font-family: 'Inter', sans-serif; }
+        .remove-injury { position: absolute; top: 10px; right: 10px; background: rgba(255,77,106,0.1); border: 1px solid rgba(255,77,106,0.3); color: var(--danger); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.75rem; transition: all 0.3s; }
+        .remove-injury:hover { background: rgba(255,77,106,0.25); }
+        .add-injury-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: rgba(0,255,163,0.08); border: 1px dashed rgba(0,255,163,0.3); border-radius: var(--radius-sm); color: var(--success); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.3s; }
+        .add-injury-btn:hover { background: rgba(0,255,163,0.15); border-color: var(--success); }
+        .step-nav { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
+        .injury-counter { font-family: 'Orbitron', monospace; font-size: 0.8rem; color: var(--primary); margin-bottom: 12px; }
+
+        /* Evidence Media Upload */
+        .evidence-section { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(0,229,255,0.1); }
+        .evidence-drop-area {
+            border: 2px dashed rgba(181,55,242,0.3); border-radius: var(--radius-md);
+            padding: 28px 20px; text-align: center; cursor: pointer;
+            background: rgba(181,55,242,0.03); transition: all 0.3s;
+        }
+        .evidence-drop-area:hover, .evidence-drop-area.drag-over {
+            border-color: var(--accent); background: rgba(181,55,242,0.08);
+            box-shadow: 0 0 25px rgba(181,55,242,0.1);
+        }
+        .evidence-drop-icon { font-size: 2.2rem; margin-bottom: 8px; }
+        .evidence-drop-text { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
+        .evidence-drop-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+        .evidence-previews { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 16px; }
+        .evidence-preview-item {
+            position: relative; border-radius: var(--radius-sm); overflow: hidden;
+            border: 1px solid rgba(181,55,242,0.2); background: rgba(3,13,36,0.6);
+            animation: fadeInUp 0.3s both;
+        }
+        .evidence-preview-item img, .evidence-preview-item video {
+            width: 100%; height: 100px; object-fit: cover; display: block;
+        }
+        .evidence-preview-info {
+            padding: 8px 10px; font-size: 0.72rem; color: var(--text-muted);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .evidence-preview-name {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85px;
+        }
+        .evidence-preview-remove {
+            position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+            border-radius: 50%; background: rgba(255,77,106,0.85); border: none;
+            color: white; cursor: pointer; font-size: 0.7rem; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+            opacity: 0;
+        }
+        .evidence-preview-item:hover .evidence-preview-remove { opacity: 1; }
+        .evidence-preview-remove:hover { background: var(--danger); transform: scale(1.15); }
+        .evidence-counter {
+            font-family: 'Orbitron', monospace; font-size: 0.75rem;
+            color: var(--accent); margin-top: 10px;
+        }
+        .evidence-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 10px; border-radius: 20px; font-size: 0.7rem;
+            font-weight: 700; text-transform: uppercase;
+        }
+        .badge-image { background: rgba(0,229,255,0.1); color: var(--primary); }
+        .badge-video { background: rgba(181,55,242,0.1); color: var(--accent); }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>Forensic Report Upload</h1>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      {% for message in messages %}
-        <div class="flash">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-  <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}">
-    <input type="file" name="file" accept=".pdf,.txt" required />
-    <input type="submit" value="Upload Report" />
-  </form>
+
+<canvas id="three-canvas"></canvas>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">ANALYZING & CROSS-VERIFYING...</div>
 </div>
+
+<div class="page-wrapper">
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <a href="{{ url_for('upload_file') }}" class="nav-brand">
+            <img src="{{ url_for('static', filename='images/forensic_hero_logo.png') }}" alt="Logo">
+            <span class="nav-brand-text">FORENSIC AI</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('upload_file') }}" class="nav-link active">Upload</a>
+            <a href="{{ url_for('list_reports') }}" class="nav-link">Reports</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="page-hero">
+        <div class="hero-image-wrapper" style="width:120px;height:120px;">
+            <img src="{{ url_for('static', filename='images/forensic_hero_logo.png') }}" alt="Logo" class="hero-image">
+            <div class="hero-image-ring"></div>
+            <div class="hero-image-ring-2"></div>
+        </div>
+        <h1>Forensic Report Analyzer</h1>
+        <p>Upload the forensic report AND enter on-the-spot body conditions. Our AI cross-verifies both to detect tampering and determine the real cause of death.</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for message in messages %}
+        <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Multi-Step Form -->
+    <div class="glass-card" style="max-width: 850px; width: 100%; animation: fadeInUp 0.8s both; animation-delay: 0.2s;">
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}" id="mainForm">
+
+            <!-- Step Indicators -->
+            <div class="step-indicator">
+                <div class="step-dot-wrap">
+                    <div class="step-dot active" id="dot1"></div>
+                    <span class="step-label">REPORT</span>
+                </div>
+                <div class="step-dot-wrap">
+                    <div class="step-dot" id="dot2"></div>
+                    <span class="step-label">INJURIES</span>
+                </div>
+                <div class="step-dot-wrap">
+                    <div class="step-dot" id="dot3"></div>
+                    <span class="step-label">ANALYZE</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Upload Report -->
+            <div class="step active" id="step1">
+                <div class="section-label">Step 1 of 3</div>
+                <div class="section-title" style="font-size:1.15rem; margin-bottom:4px;">Upload Forensic Report</div>
+                <p class="section-subtitle">Upload the official postmortem / forensic report file.</p>
+
+                <div class="drop-area" id="dropArea">
+                    <span class="drop-icon">🔬</span>
+                    <div class="drop-text">Drag & drop forensic report here</div>
+                    <div class="drop-subtext">PDF, TXT, DOCX, JPG, PNG</div>
+                    <input type="file" name="file" class="file-input-hidden" id="fileInput" accept=".pdf,.txt,.docx,.jpg,.jpeg,.png,.bmp,.tiff" required>
+                </div>
+
+                <div class="file-preview" id="filePreview">
+                    <span class="file-preview-icon" id="filePreviewIcon">📄</span>
+                    <div class="file-preview-info">
+                        <div class="file-preview-name" id="filePreviewName">—</div>
+                        <div class="file-preview-size" id="filePreviewSize">—</div>
+                    </div>
+                    <button type="button" class="file-preview-remove" id="fileRemoveBtn">✕ Remove</button>
+                </div>
+
+                <div class="step-nav">
+                    <div></div>
+                    <button type="button" class="btn-primary" onclick="goStep(2)" id="nextStep1Btn" disabled>
+                        Next: Body Conditions →
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Body Conditions -->
+            <div class="step" id="step2">
+                <div class="section-label">Step 2 of 3</div>
+                <div class="section-title" style="font-size:1.15rem; margin-bottom:4px;">On-the-Spot Body Conditions</div>
+                <p class="section-subtitle">Enter the injuries, bleeding, cuts, fractures observed at the accident/crime scene. This is crucial for cross-verification.</p>
+
+                <div class="injury-counter" id="injuryCounter">0 injuries added</div>
+                <div id="injuryList">
+                    <!-- Injury entries added dynamically -->
+                </div>
+
+                <button type="button" class="add-injury-btn" onclick="addInjury()">
+                    ➕ Add Injury / Condition
+                </button>
+
+                <!-- Scene Notes -->
+                <div style="margin-top: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">📝 Scene Notes / Additional Observations</label>
+                        <textarea name="scene_notes" class="form-textarea" placeholder="Describe the scene: where was the body found? Position? Surroundings? Any suspicious elements? Time between incident and examination?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Evidence Media Upload -->
+                <div class="evidence-section">
+                    <div class="form-label" style="font-size:0.75rem; margin-bottom:12px;">📸 UPLOAD EVIDENCE MEDIA <span style="opacity:0.6;">(Optional)</span></div>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:14px;">Upload photos or videos of the body/scene condition for enhanced AI analysis. Images will be OCR-scanned for additional text evidence.</p>
+
+                    <div class="evidence-drop-area" id="evidenceDropArea">
+                        <div class="evidence-drop-icon">📸</div>
+                        <div class="evidence-drop-text">Drag & drop evidence images/videos here</div>
+                        <div class="evidence-drop-sub">JPG, PNG, BMP, TIFF, MP4, AVI, MOV, MKV — Max 10 files</div>
+                        <input type="file" name="evidence_media" id="evidenceInput" multiple
+                               accept=".jpg,.jpeg,.png,.bmp,.tiff,.mp4,.avi,.mov,.mkv"
+                               style="display:none;">
+                    </div>
+
+                    <div class="evidence-previews" id="evidencePreviews"></div>
+                    <div class="evidence-counter" id="evidenceCounter"></div>
+                </div>
+
+                <div class="step-nav">
+                    <button type="button" class="btn-secondary" onclick="goStep(1)">← Back</button>
+                    <button type="button" class="btn-primary" onclick="goStep(3)">Next: Review & Analyze →</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Review & Submit -->
+            <div class="step" id="step3">
+                <div class="section-label">Step 3 of 3</div>
+                <div class="section-title" style="font-size:1.15rem; margin-bottom:4px;">Review & Analyze</div>
+                <p class="section-subtitle">Review your inputs and submit for AI cross-verification analysis.</p>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-bottom:20px;">
+                    <div class="detail-item">
+                        <div class="detail-label">📄 Report File</div>
+                        <div class="detail-value" id="reviewFileName" style="font-size:0.9rem;">—</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">🩹 Injuries Entered</div>
+                        <div class="detail-value" id="reviewInjuryCount" style="font-size:0.9rem;">0</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">📸 Evidence Media</div>
+                        <div class="detail-value" id="reviewEvidenceCount" style="font-size:0.9rem;">0 files</div>
+                    </div>
+                </div>
+
+                <div id="reviewInjuries" style="max-height:200px; overflow-y:auto; margin-bottom:16px;"></div>
+
+                <div style="background:rgba(255,184,48,0.08); border:1px solid rgba(255,184,48,0.25); border-radius:var(--radius-md); padding:14px 18px; margin-bottom:20px;">
+                    <div style="font-size:0.85rem; color:var(--warning);">
+                        ⚠️ <strong>Important:</strong> If you don't enter body conditions, the system will only extract report data without cross-verification. For tamper detection, body condition data is essential.
+                    </div>
+                </div>
+
+                <div class="step-nav">
+                    <button type="button" class="btn-secondary" onclick="goStep(2)">← Back</button>
+                    <button type="submit" class="btn-primary" id="analyzeBtn">
+                        🔬 Analyze & Cross-Verify
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Features Grid -->
+    <div style="max-width:850px; width:100%; margin-top:28px; display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; animation:fadeInUp 1s both; animation-delay:0.4s;">
+        <div class="glass-card" style="text-align:center; padding:20px;">
+            <div style="font-size:2rem; margin-bottom:8px;">🔍</div>
+            <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--primary); margin-bottom:4px;">Cross-Verify</div>
+            <div style="font-size:0.78rem; color:var(--text-secondary);">Compare report vs actual body conditions</div>
+        </div>
+        <div class="glass-card" style="text-align:center; padding:20px;">
+            <div style="font-size:2rem; margin-bottom:8px;">🚨</div>
+            <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--primary); margin-bottom:4px;">Tamper Detection</div>
+            <div style="font-size:0.78rem; color:var(--text-secondary);">Flag inconsistencies & red flags</div>
+        </div>
+        <div class="glass-card" style="text-align:center; padding:20px;">
+            <div style="font-size:2rem; margin-bottom:8px;">🧬</div>
+            <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--primary); margin-bottom:4px;">AI Verdict</div>
+            <div style="font-size:0.78rem; color:var(--text-secondary);">Independent cause of death analysis</div>
+        </div>
+        <div class="glass-card" style="text-align:center; padding:20px;">
+            <div style="font-size:2rem; margin-bottom:8px;">📊</div>
+            <div style="font-family:'Orbitron',monospace; font-size:0.75rem; color:var(--primary); margin-bottom:4px;">Consistency Score</div>
+            <div style="font-size:0.78rem; color:var(--text-secondary);">Percentage match between report & evidence</div>
+        </div>
+    </div>
+
+    <div style="height:60px;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/three-scene.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const filePreviewName = document.getElementById('filePreviewName');
+    const filePreviewSize = document.getElementById('filePreviewSize');
+    const filePreviewIcon = document.getElementById('filePreviewIcon');
+    const fileRemoveBtn = document.getElementById('fileRemoveBtn');
+    const nextBtn = document.getElementById('nextStep1Btn');
+    const mainForm = document.getElementById('mainForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    const fileIcons = {'pdf':'📕','txt':'📝','docx':'📘','jpg':'🖼️','jpeg':'🖼️','png':'🖼️','bmp':'🖼️','tiff':'🖼️'};
+
+    dropArea.addEventListener('click', () => fileInput.click());
+    ['dragenter','dragover'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); dropArea.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); dropArea.classList.remove('drag-over'); }));
+    dropArea.addEventListener('drop', e => { if(e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showPreview(e.dataTransfer.files[0]); } });
+    fileInput.addEventListener('change', () => { if(fileInput.files.length) showPreview(fileInput.files[0]); });
+
+    function showPreview(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
+        filePreviewIcon.textContent = fileIcons[ext] || '📄';
+        filePreviewName.textContent = file.name;
+        filePreviewSize.textContent = formatSize(file.size);
+        filePreview.classList.add('show');
+        nextBtn.disabled = false;
+        nextBtn.style.animation = 'glowPulse 1.5s ease-in-out infinite';
+    }
+    function formatSize(b) { if(b<1024)return b+'B'; if(b<1048576)return (b/1024).toFixed(1)+'KB'; return (b/1048576).toFixed(2)+'MB'; }
+    fileRemoveBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.value=''; filePreview.classList.remove('show'); nextBtn.disabled=true; nextBtn.style.animation=''; });
+    mainForm.addEventListener('submit', () => { loadingOverlay.classList.add('active'); });
+});
+
+// ===== Multi-step navigation =====
+function goStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step'+step).classList.add('active');
+    for(let i=1;i<=3;i++) {
+        const dot = document.getElementById('dot'+i);
+        dot.classList.remove('active','done');
+        if(i < step) dot.classList.add('done');
+        if(i === step) dot.classList.add('active');
+    }
+    if(step === 3) updateReview();
+    window.scrollTo({top: 200, behavior: 'smooth'});
+}
+
+// ===== Injury management =====
+let injuryCount = 0;
+function addInjury() {
+    injuryCount++;
+    const div = document.createElement('div');
+    div.className = 'injury-entry';
+    div.id = 'injury_'+injuryCount;
+    div.innerHTML = `
+        <button type="button" class="remove-injury" onclick="removeInjury(${injuryCount})">✕</button>
+        <div class="injury-grid">
+            <div class="form-group">
+                <label class="form-label">Injury Type</label>
+                <select name="injury_type[]" class="form-select">
+                    <option value="">Select...</option>
+                    <option value="Fracture">Fracture</option>
+                    <option value="Cut / Laceration">Cut / Laceration</option>
+                    <option value="Deep Wound">Deep Wound</option>
+                    <option value="Stab Wound">Stab Wound</option>
+                    <option value="Bruise / Contusion">Bruise / Contusion</option>
+                    <option value="Burn">Burn</option>
+                    <option value="Internal Bleeding">Internal Bleeding</option>
+                    <option value="Crush Injury">Crush Injury</option>
+                    <option value="Ligature Marks">Ligature Marks</option>
+                    <option value="Strangulation Marks">Strangulation Marks</option>
+                    <option value="Gunshot Wound">Gunshot Wound</option>
+                    <option value="Abrasion / Road Rash">Abrasion / Road Rash</option>
+                    <option value="Swelling / Edema">Swelling / Edema</option>
+                    <option value="Dislocation">Dislocation</option>
+                    <option value="Amputation">Amputation</option>
+                    <option value="Drowning Signs">Drowning Signs</option>
+                    <option value="Poisoning Signs">Poisoning Signs</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Body Part</label>
+                <select name="body_part[]" class="form-select">
+                    <option value="">Select...</option>
+                    <option value="Head / Skull">Head / Skull</option>
+                    <option value="Face">Face</option>
+                    <option value="Neck">Neck</option>
+                    <option value="Chest">Chest</option>
+                    <option value="Abdomen">Abdomen</option>
+                    <option value="Back">Back</option>
+                    <option value="Left Arm">Left Arm</option>
+                    <option value="Right Arm">Right Arm</option>
+                    <option value="Left Hand">Left Hand</option>
+                    <option value="Right Hand">Right Hand</option>
+                    <option value="Left Leg">Left Leg</option>
+                    <option value="Right Leg">Right Leg</option>
+                    <option value="Pelvis / Hip">Pelvis / Hip</option>
+                    <option value="Spine">Spine</option>
+                    <option value="Internal Organs">Internal Organs</option>
+                    <option value="Multiple">Multiple</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Severity</label>
+                <select name="severity[]" class="form-select">
+                    <option value="minor">Minor</option>
+                    <option value="moderate" selected>Moderate</option>
+                    <option value="severe">Severe</option>
+                    <option value="critical">Critical</option>
+                    <option value="fatal">Fatal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Bleeding Level</label>
+                <select name="bleeding_level[]" class="form-select">
+                    <option value="none">None</option>
+                    <option value="minor">Minor</option>
+                    <option value="moderate">Moderate</option>
+                    <option value="severe">Severe</option>
+                    <option value="massive">Massive / Fatal</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+            <label class="form-label">Description</label>
+            <input type="text" name="description[]" class="form-input" placeholder="e.g., Compound skull fracture with exposed bone, heavy bleeding from wound">
+        </div>
+    `;
+    document.getElementById('injuryList').appendChild(div);
+    updateInjuryCounter();
+}
+
+function removeInjury(id) {
+    const el = document.getElementById('injury_'+id);
+    if(el) { el.style.animation = 'fadeInUp 0.3s reverse'; setTimeout(() => { el.remove(); updateInjuryCounter(); }, 280); }
+}
+
+function updateInjuryCounter() {
+    const count = document.querySelectorAll('.injury-entry').length;
+    document.getElementById('injuryCounter').textContent = count + ' injury/condition(s) added';
+}
+
+function updateReview() {
+    const fi = document.getElementById('fileInput');
+    document.getElementById('reviewFileName').textContent = fi.files.length ? fi.files[0].name : 'No file selected';
+    const entries = document.querySelectorAll('.injury-entry');
+    document.getElementById('reviewInjuryCount').textContent = entries.length;
+
+    // Evidence media count
+    const evidenceInput = document.getElementById('evidenceInput');
+    const evCount = evidenceInput.files ? evidenceInput.files.length : 0;
+    document.getElementById('reviewEvidenceCount').textContent = evCount + ' file' + (evCount !== 1 ? 's' : '');
+
+    let html = '';
+    entries.forEach((entry, i) => {
+        const type = entry.querySelector('[name="injury_type[]"]').value || 'Unknown';
+        const part = entry.querySelector('[name="body_part[]"]').value || 'Unknown';
+        const sev = entry.querySelector('[name="severity[]"]').value || 'moderate';
+        const sevColors = {minor:'var(--success)',moderate:'var(--warning)',severe:'#ff8c00',critical:'var(--danger)',fatal:'var(--danger)'};
+        html += `<div style="padding:8px 12px; background:rgba(0,229,255,0.03); border-radius:8px; margin-bottom:6px; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+            <span>${i+1}. ${type} — ${part}</span>
+            <span style="color:${sevColors[sev]||'var(--text-muted)'}; font-weight:600; font-size:0.75rem; text-transform:uppercase;">${sev}</span>
+        </div>`;
+    });
+    document.getElementById('reviewInjuries').innerHTML = html || '<div style="color:var(--text-muted); font-size:0.85rem; text-align:center; padding:16px;">No body conditions entered — analysis will be report-only</div>';
+}
+
+// ===== Evidence Media Upload =====
+(function() {
+    const evidenceArea = document.getElementById('evidenceDropArea');
+    const evidenceInput = document.getElementById('evidenceInput');
+    const evidencePreviews = document.getElementById('evidencePreviews');
+    const evidenceCounter = document.getElementById('evidenceCounter');
+    const imageExts = ['jpg','jpeg','png','bmp','tiff'];
+    const videoExts = ['mp4','avi','mov','mkv'];
+    const maxFiles = 10;
+
+    // Track files via DataTransfer to allow removal
+    let fileTransfer = new DataTransfer();
+
+    evidenceArea.addEventListener('click', () => evidenceInput.click());
+    ['dragenter','dragover'].forEach(e => evidenceArea.addEventListener(e, ev => { ev.preventDefault(); evidenceArea.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(e => evidenceArea.addEventListener(e, ev => { ev.preventDefault(); evidenceArea.classList.remove('drag-over'); }));
+
+    evidenceArea.addEventListener('drop', e => {
+        if (e.dataTransfer.files.length) addEvidenceFiles(e.dataTransfer.files);
+    });
+
+    evidenceInput.addEventListener('change', () => {
+        if (evidenceInput.files.length) addEvidenceFiles(evidenceInput.files);
+    });
+
+    function addEvidenceFiles(newFiles) {
+        for (let i = 0; i < newFiles.length; i++) {
+            if (fileTransfer.items.length >= maxFiles) break;
+            const f = newFiles[i];
+            const ext = f.name.split('.').pop().toLowerCase();
+            if (!imageExts.includes(ext) && !videoExts.includes(ext)) continue;
+            fileTransfer.items.add(f);
+        }
+        evidenceInput.files = fileTransfer.files;
+        renderPreviews();
+    }
+
+    function removeEvidenceFile(index) {
+        const newTransfer = new DataTransfer();
+        for (let i = 0; i < fileTransfer.files.length; i++) {
+            if (i !== index) newTransfer.items.add(fileTransfer.files[i]);
+        }
+        fileTransfer = newTransfer;
+        evidenceInput.files = fileTransfer.files;
+        renderPreviews();
+    }
+    window.removeEvidenceFile = removeEvidenceFile;
+
+    function renderPreviews() {
+        evidencePreviews.innerHTML = '';
+        const files = fileTransfer.files;
+        if (files.length === 0) {
+            evidenceCounter.textContent = '';
+            return;
+        }
+        evidenceCounter.textContent = `${files.length} / ${maxFiles} file(s) selected`;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const ext = file.name.split('.').pop().toLowerCase();
+            const isVideo = videoExts.includes(ext);
+            const div = document.createElement('div');
+            div.className = 'evidence-preview-item';
+
+            let mediaEl = '';
+            if (isVideo) {
+                const url = URL.createObjectURL(file);
+                mediaEl = `<video src="${url}" muted preload="metadata" style="width:100%;height:100px;object-fit:cover;"></video>`;
+            } else {
+                const url = URL.createObjectURL(file);
+                mediaEl = `<img src="${url}" alt="${file.name}">`;
+            }
+
+            const size = file.size < 1048576 ? (file.size/1024).toFixed(1)+'KB' : (file.size/1048576).toFixed(2)+'MB';
+            const badge = isVideo
+                ? '<span class="evidence-badge badge-video">🎬 VID</span>'
+                : '<span class="evidence-badge badge-image">📷 IMG</span>';
+
+            div.innerHTML = `
+                <button type="button" class="evidence-preview-remove" onclick="removeEvidenceFile(${i})" title="Remove">✕</button>
+                ${mediaEl}
+                <div class="evidence-preview-info">
+                    <span class="evidence-preview-name" title="${file.name}">${file.name}</span>
+                    <span>${size}</span>
+                </div>
+                <div style="padding:0 10px 6px; text-align:center;">${badge}</div>
+            `;
+            evidencePreviews.appendChild(div);
+        }
+    }
+})();
+
+// Add first injury by default
+addInjury();
+</script>
+
 </body>
 </html>

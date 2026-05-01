@@ -1,183 +1,415 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Upload Successful</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto+Mono&display=swap');
-    body, html {
-      margin: 0; padding: 0; min-height: 100vh;
-      font-family: 'Roboto Mono', monospace;
-      background: radial-gradient(ellipse at center, #0f192a 0%, #030712 100%);
-      color: #a0c7ff;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      overflow: auto;
-    }
-    .container {
-      background: linear-gradient(145deg, #112e54, #0a1a2e);
-      border-radius: 20px;
-      width: 80vw;
-      max-width: 1200px;
-      padding: 40px 35px;
-      margin: 40px 0 40px 0;
-      box-shadow: 0 0 20px #3f8cff55, inset 0 0 20px #074a93;
-      border: 2px solid #2a5688;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      user-select: none;
-      text-align: left;
-      height: auto;
-      max-height: none;
-    }
-    h1 {
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      font-size: 2.8rem;
-      margin: 0 0 30px;
-      color: #33a1ff;
-      text-shadow: 0 0 8px #33a1ff, 0 0 15px #0a94ff;
-      text-align: center;
-    }
-    p {
-      font-size: 1.2rem;
-      line-height: 1.5;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    pre {
-      background: #071429;
-      color: #81d9ff;
-      padding: 25px 22px;
-      border-radius: 15px;
-      font-family: 'Roboto Mono', monospace;
-      white-space: pre-wrap;
-      border: 1.5px solid #0e6dcc;
-      box-shadow: 0 0 10px #33a1ff44 inset, 0 0 15px #33a1ff88;
-      user-select: text;
-      width: 100%;
-      margin-bottom: 10px;
-      max-height: 40vh;
-      overflow: auto;
-    }
-    table.forensic-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 18px;
-      background: #092033;
-      box-shadow: 0 0 12px #33a1ff77;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    table.forensic-table td {
-      padding: 10px 12px;
-      font-size: 1.07em;
-      color: #d8f4ff;
-      border-bottom: 1px solid #054c7a;
-    }
-    table.forensic-table td.forensic-label {
-      background: #243c59;
-      color: #6ad3ff;
-      font-weight: bold;
-      font-family: "Orbitron", monospace;
-      width: 34%;
-    }
-    table.forensic-table tr:last-child td {
-      border-bottom: none;
-    }
-    table.entities-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 22px;
-      background: #071739;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 0 10px #33a1ff99;
-    }
-    table.entities-table th, table.entities-table td {
-      padding: 10px 12px;
-      font-size: 1.03em;
-    }
-    table.entities-table th {
-      background: #0857ab;
-      color: #b9e7ff;
-      font-family: 'Orbitron', monospace;
-      text-align: left;
-    }
-    table.entities-table td.entity-type {
-      background: #1c3557;
-      color: #6ad3ff;
-      font-weight: bold;
-      font-family: 'Orbitron', monospace;
-      width: 25%;
-      border-right: 1px solid #054c7a;
-    }
-    table.entities-table td.entity-value {
-      background: #081d31;
-      color: #d8f4ff;
-      font-family: 'Roboto Mono', monospace;
-      word-break: break-word;
-    }
-    table.entities-table tr:not(:last-child) td {
-      border-bottom: 1px solid #052749;
-    }
-    a {
-      margin-top: 20px;
-      font-family: 'Orbitron', monospace;
-      font-weight: 700;
-      text-decoration: none;
-      color: #33a1ff;
-      padding: 12px 42px;
-      border-radius: 15px;
-      border: 1.5px solid #33a1ff;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
-      user-select: none;
-      align-self: center;
-      display: inline-block;
-      text-align: center;
-    }
-    a:hover {
-      background-color: #33a1ff;
-      color: #071429;
-      box-shadow: 0 0 25px #33a1ffaa;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result — {{ filename }} | Forensic AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .risk-badge { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:50px; font-family:'Orbitron',monospace; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; }
+        .risk-LOW { background:rgba(0,255,163,0.1); border:1px solid rgba(0,255,163,0.3); color:var(--success); }
+        .risk-MEDIUM { background:rgba(255,184,48,0.1); border:1px solid rgba(255,184,48,0.3); color:var(--warning); }
+        .risk-HIGH { background:rgba(255,140,0,0.12); border:1px solid rgba(255,140,0,0.35); color:#ff8c00; }
+        .risk-CRITICAL { background:rgba(255,77,106,0.12); border:1px solid rgba(255,77,106,0.35); color:var(--danger); }
+        .risk-dot { width:8px; height:8px; border-radius:50%; animation:pulse 1.5s infinite; }
+        .risk-LOW .risk-dot { background:var(--success); box-shadow:0 0 10px var(--success); }
+        .risk-MEDIUM .risk-dot { background:var(--warning); box-shadow:0 0 10px var(--warning); }
+        .risk-HIGH .risk-dot { background:#ff8c00; box-shadow:0 0 10px #ff8c00; }
+        .risk-CRITICAL .risk-dot { background:var(--danger); box-shadow:0 0 10px var(--danger); }
+
+        .score-gauge { position:relative; width:120px; height:120px; margin:0 auto; }
+        .score-circle { width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-direction:column; }
+        .score-number { font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; }
+        .score-label { font-size:0.6rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; }
+
+        .verdict-box { text-align:center; padding:28px; background:linear-gradient(135deg,rgba(0,229,255,0.05),rgba(181,55,242,0.05)); border-radius:var(--radius-lg); border:1px solid var(--glass-border); }
+        .verdict-cause { font-family:'Orbitron',monospace; font-size:1.3rem; font-weight:700; color:var(--primary); margin:12px 0; }
+        .verdict-confidence { font-size:0.9rem; color:var(--text-secondary); }
+
+        .match-item { padding:10px 14px; border-radius:var(--radius-sm); margin-bottom:6px; font-size:0.85rem; display:flex; align-items:flex-start; gap:10px; }
+        .match-MATCH { background:rgba(0,255,163,0.06); border-left:3px solid var(--success); }
+        .match-MISSING { background:rgba(255,184,48,0.06); border-left:3px solid var(--warning); }
+        .match-SUSPICIOUS { background:rgba(255,77,106,0.08); border-left:3px solid var(--danger); }
+        .match-EXTRA { background:rgba(181,55,242,0.06); border-left:3px solid var(--accent); }
+
+        .red-flag { padding:12px 16px; border-radius:var(--radius-sm); margin-bottom:8px; display:flex; align-items:flex-start; gap:10px; }
+        .red-flag-CRITICAL { background:rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.25); }
+        .red-flag-HIGH { background:rgba(255,140,0,0.08); border:1px solid rgba(255,140,0,0.2); }
+        .red-flag-MEDIUM { background:rgba(255,184,48,0.06); border:1px solid rgba(255,184,48,0.2); }
+
+        .reasoning-line { padding:6px 0; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid rgba(0,229,255,0.05); }
+        .reasoning-line:last-child { border-bottom:none; }
+
+        .tab-bar { display:flex; gap:4px; margin-bottom:20px; flex-wrap:wrap; }
+        .tab-btn { padding:10px 20px; background:rgba(0,229,255,0.05); border:1px solid rgba(0,229,255,0.1); border-radius:var(--radius-sm); color:var(--text-muted); cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.3s; }
+        .tab-btn.active { background:rgba(0,229,255,0.12); border-color:var(--primary); color:var(--primary); }
+        .tab-btn:hover { border-color:var(--glass-border); color:var(--text-secondary); }
+        .tab-content { display:none; animation:fadeInUp 0.4s both; }
+        .tab-content.active { display:block; }
+
+        /* Evidence Gallery */
+        .evidence-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+        .evidence-card {
+            border-radius:var(--radius-md); overflow:hidden; border:1px solid rgba(181,55,242,0.15);
+            background:rgba(3,13,36,0.6); transition:all 0.3s;
+        }
+        .evidence-card:hover { border-color:var(--accent); box-shadow:0 4px 20px rgba(181,55,242,0.1); }
+        .evidence-card img { width:100%; height:150px; object-fit:cover; display:block; cursor:pointer; }
+        .evidence-card video { width:100%; max-height:200px; display:block; background:#000; }
+        .evidence-card-body { padding:12px; }
+        .evidence-card-name { font-size:0.78rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+        .evidence-card-badge {
+            display:inline-flex; align-items:center; gap:4px; padding:2px 10px;
+            border-radius:20px; font-size:0.65rem; font-weight:700; text-transform:uppercase;
+        }
+        .evidence-badge-image { background:rgba(0,229,255,0.1); color:var(--primary); }
+        .evidence-badge-video { background:rgba(181,55,242,0.1); color:var(--accent); }
+        .evidence-ocr-text {
+            margin-top:8px; padding:8px; background:rgba(0,229,255,0.03);
+            border:1px solid rgba(0,229,255,0.1); border-radius:var(--radius-sm);
+            font-size:0.72rem; color:var(--text-muted); max-height:80px;
+            overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+        }
+        /* Lightbox */
+        .lightbox-overlay {
+            display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
+            background:rgba(0,0,0,0.92); z-index:9999; align-items:center;
+            justify-content:center; cursor:pointer;
+        }
+        .lightbox-overlay.active { display:flex; }
+        .lightbox-overlay img { max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 0 40px rgba(0,229,255,0.15); }
+        .lightbox-close {
+            position:absolute; top:20px; right:30px; font-size:2rem; color:white;
+            cursor:pointer; background:none; border:none; z-index:10000;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Upload Successful</h1>
-    <p>File named <strong>{{ filename }}</strong> uploaded successfully.</p>
 
-    <h2>Extracted Text:</h2>
-    <pre>{{ report_text }}</pre>
+<canvas id="three-canvas"></canvas>
 
-    <h2>Key Report Details:</h2>
-    <table class="forensic-table">
-      {% for key, value in forensic_info.items() %}
-        <tr>
-          <td class="forensic-label">{{ key }}</td>
-          <td>{{ value }}</td>
-        </tr>
-      {% endfor %}
-    </table>
+<div class="page-wrapper">
 
-    <h2>Named Entities Found:</h2>
-    <table class="entities-table">
-      <tr>
-        <th>Type</th>
-        <th>Value</th>
-      </tr>
-      {% for ent in entities %}
-        <tr>
-          <td class="entity-type">{{ ent.label }}</td>
-          <td class="entity-value">{{ ent.text }}</td>
-        </tr>
-      {% endfor %}
-    </table>
+    <nav class="nav-bar">
+        <a href="{{ url_for('upload_file') }}" class="nav-brand">
+            <img src="{{ url_for('static', filename='images/forensic_hero_logo.png') }}" alt="Logo">
+            <span class="nav-brand-text">FORENSIC AI</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('upload_file') }}" class="nav-link">Upload</a>
+            <a href="{{ url_for('list_reports') }}" class="nav-link">Reports</a>
+        </div>
+    </nav>
 
-    <a href="{{ url_for('upload_file') }}">Upload Another File</a>
-  </div>
+    <div class="page-hero" style="margin-bottom:16px;">
+        <div class="section-label" style="justify-content:center;">Analysis Complete</div>
+        <h1>Forensic Verification Report</h1>
+        <p>File: <span style="color:var(--primary);font-weight:600;">{{ filename }}</span></p>
+    </div>
+
+    {% if verification %}
+    <!-- ===== TAMPERING RISK BADGE ===== -->
+    <div style="display:flex; justify-content:center; margin-bottom:24px; animation:fadeInUp 0.5s both;">
+        <div class="risk-badge risk-{{ verification.tampering_risk }}">
+            <span class="risk-dot"></span>
+            TAMPERING RISK: {{ verification.tampering_risk }}
+        </div>
+    </div>
+
+    <!-- ===== OVERVIEW CARDS ===== -->
+    <div style="max-width:1100px; width:100%; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-bottom:24px; animation:fadeInUp 0.6s both;">
+        <!-- Consistency Score -->
+        <div class="glass-card" style="text-align:center; padding:24px;">
+            <div class="score-circle" style="border:3px solid {% if verification.consistency_score >= 70 %}var(--success){% elif verification.consistency_score >= 40 %}var(--warning){% else %}var(--danger){% endif %}; margin:0 auto 10px;">
+                <div class="score-number" style="color:{% if verification.consistency_score >= 70 %}var(--success){% elif verification.consistency_score >= 40 %}var(--warning){% else %}var(--danger){% endif %};">{{ verification.consistency_score|round|int }}%</div>
+                <div class="score-label">Consistency</div>
+            </div>
+        </div>
+        <!-- AI Verdict -->
+        <div class="glass-card" style="padding:24px;">
+            <div class="section-label">AI Verdict</div>
+            <div style="font-family:'Orbitron',monospace; font-size:0.95rem; color:var(--primary); margin:8px 0;">{{ verification.ai_cause_of_death }}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">Confidence: {{ verification.ai_confidence }}%</div>
+        </div>
+        <!-- Report's COD -->
+        <div class="glass-card" style="padding:24px;">
+            <div class="section-label">Report States</div>
+            <div style="font-family:'Orbitron',monospace; font-size:0.95rem; color:{% if verification.cod_match %}var(--success){% else %}var(--danger){% endif %}; margin:8px 0;">{{ verification.report_cod or 'Not stated' }}</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);">{{ 'Matches AI verdict ✅' if verification.cod_match else 'Does NOT match AI verdict ❌' }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== TABBED CONTENT ===== -->
+    <div class="glass-card" style="max-width:1100px; width:100%; animation:fadeInUp 0.7s both;">
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="showTab('report')">📋 Report Data</button>
+            {% if verification %}
+            <button class="tab-btn" onclick="showTab('verify')">🔍 Cross-Verification</button>
+            <button class="tab-btn" onclick="showTab('flags')">🚨 Red Flags ({{ verification.red_flags|length }})</button>
+            <button class="tab-btn" onclick="showTab('reasoning')">🧬 AI Reasoning</button>
+            {% endif %}
+            {% if body_conditions %}
+            <button class="tab-btn" onclick="showTab('body')">🩹 Body Conditions ({{ body_conditions|length }})</button>
+            {% endif %}
+            {% if evidence_media %}
+            <button class="tab-btn" onclick="showTab('evidence')">📸 Evidence Media ({{ evidence_media|length }})</button>
+            {% endif %}
+            <button class="tab-btn" onclick="showTab('entities')">🏷️ Entities</button>
+            <button class="tab-btn" onclick="showTab('text')">📝 Raw Text</button>
+        </div>
+
+        <!-- TAB: Report Data -->
+        <div class="tab-content active" id="tab-report">
+            <div class="section-label">Extracted Data</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Key Report Details</div>
+            <div class="detail-grid stagger">
+                <div class="detail-item"><div class="detail-label">👤 Name</div><div class="detail-value">{{ forensic_info.name or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">📅 Age</div><div class="detail-value">{{ forensic_info.age or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">⚧ Gender</div><div class="detail-value">{{ forensic_info.gender or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">📍 Address</div><div class="detail-value">{{ forensic_info.address or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">💀 Date of Death</div><div class="detail-value">{{ forensic_info.date_of_death or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">⚕️ Cause of Death (Report)</div><div class="detail-value" style="color:var(--danger);">{{ forensic_info.cause_of_death or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">🩺 Examiner</div><div class="detail-value">{{ forensic_info.examiner or '—' }}</div></div>
+                {% if forensic_info.event_type %}<div class="detail-item"><div class="detail-label">📌 Event Type</div><div class="detail-value">{{ forensic_info.event_type }}</div></div>{% endif %}
+                {% if forensic_info.doctor_comments %}<div class="detail-item" style="grid-column:span 2;"><div class="detail-label">💬 Doctor Comments</div><div class="detail-value" style="font-size:0.9rem;">{{ forensic_info.doctor_comments }}</div></div>{% endif %}
+                {% if forensic_info.medical_history %}<div class="detail-item"><div class="detail-label">🏥 Medical History</div><div class="detail-value">{{ forensic_info.medical_history }}</div></div>{% endif %}
+                {% if forensic_info.lab_results %}<div class="detail-item" style="grid-column:span 2;"><div class="detail-label">🧪 Lab Results</div><div class="detail-value">{{ forensic_info.lab_results }}</div></div>{% endif %}
+            </div>
+        </div>
+
+        {% if verification %}
+        <!-- TAB: Cross-Verification -->
+        <div class="tab-content" id="tab-verify">
+            <div class="section-label">Cross-Verification</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Report vs Body Conditions</div>
+
+            {% if verification.matches %}
+            <div style="margin-bottom:16px;">
+                <div style="font-size:0.85rem; color:var(--success); font-weight:600; margin-bottom:8px;">✅ Matches ({{ verification.matches|length }})</div>
+                {% for m in verification.matches %}
+                <div class="match-item match-MATCH"><span>✅</span><span>{{ m.note }}</span></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if verification.suspicious %}
+            <div style="margin-bottom:16px;">
+                <div style="font-size:0.85rem; color:var(--danger); font-weight:600; margin-bottom:8px;">🚨 Suspicious — Not in Report ({{ verification.suspicious|length }})</div>
+                {% for s in verification.suspicious %}
+                <div class="match-item match-SUSPICIOUS"><span>🚨</span><span>{{ s.note }}</span></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if verification.missing_from_report %}
+            <div style="margin-bottom:16px;">
+                <div style="font-size:0.85rem; color:var(--warning); font-weight:600; margin-bottom:8px;">⚠️ Missing from Report ({{ verification.missing_from_report|length }})</div>
+                {% for m in verification.missing_from_report %}
+                <div class="match-item match-MISSING"><span>⚠️</span><span>{{ m.note }}</span></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if verification.extra_in_report %}
+            <div style="margin-bottom:16px;">
+                <div style="font-size:0.85rem; color:var(--accent); font-weight:600; margin-bottom:8px;">🔮 Extra in Report ({{ verification.extra_in_report|length }})</div>
+                {% for e in verification.extra_in_report %}
+                <div class="match-item match-EXTRA"><span>🔮</span><span>{{ e.note }}</span></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:12px;">
+                {{ verification.cod_note }}
+            </div>
+        </div>
+
+        <!-- TAB: Red Flags -->
+        <div class="tab-content" id="tab-flags">
+            <div class="section-label">Tamper Detection</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Red Flags & Warnings</div>
+
+            {% if verification.red_flags %}
+                {% for flag in verification.red_flags %}
+                <div class="red-flag red-flag-{{ flag.severity }}">
+                    <span style="font-size:1.2rem;">{% if flag.severity == 'CRITICAL' %}🔴{% elif flag.severity == 'HIGH' %}🟠{% else %}🟡{% endif %}</span>
+                    <div>
+                        <div style="font-weight:700; font-size:0.85rem; margin-bottom:2px;">{{ flag.name }} <span style="font-size:0.7rem; opacity:0.7;">[{{ flag.severity }}]</span></div>
+                        <div style="font-size:0.82rem; color:var(--text-secondary);">{{ flag.message }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align:center; padding:32px; color:var(--success);">
+                    <span style="font-size:2rem; display:block; margin-bottom:8px;">✅</span>
+                    No red flags detected. Report appears consistent.
+                </div>
+            {% endif %}
+
+            {% if verification.assault_indicators %}
+            <div style="margin-top:20px; padding:16px; background:rgba(255,77,106,0.05); border-radius:var(--radius-md); border:1px solid rgba(255,77,106,0.15);">
+                <div style="font-weight:700; font-size:0.85rem; color:var(--danger); margin-bottom:8px;">⚔️ Assault Indicators Detected</div>
+                {% for ai in verification.assault_indicators %}
+                <div style="font-size:0.82rem; color:var(--text-secondary); padding:4px 0;">• {{ ai.indicator }} — {{ ai.injury }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- TAB: AI Reasoning -->
+        <div class="tab-content" id="tab-reasoning">
+            <div class="verdict-box" style="margin-bottom:20px;">
+                <div class="section-label" style="justify-content:center;">Independent AI Analysis</div>
+                <div class="verdict-cause">{{ verification.ai_cause_of_death }}</div>
+                <div class="verdict-confidence">Confidence: <strong>{{ verification.ai_confidence }}%</strong></div>
+            </div>
+
+            <div class="section-label">Reasoning Chain</div>
+            <div style="margin-top:8px;">
+                {% for line in verification.ai_reasoning %}
+                <div class="reasoning-line">{{ line }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if body_conditions %}
+        <!-- TAB: Body Conditions -->
+        <div class="tab-content" id="tab-body">
+            <div class="section-label">Scene Evidence</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Observed Body Conditions</div>
+            <div class="detail-grid stagger">
+                {% for cond in body_conditions %}
+                <div class="detail-item">
+                    <div class="detail-label" style="color:{% if cond.severity in ['critical','fatal'] %}var(--danger){% elif cond.severity == 'severe' %}#ff8c00{% else %}var(--text-muted){% endif %};">
+                        {{ cond.severity|upper }} — {{ cond.injury_type }}
+                    </div>
+                    <div class="detail-value" style="font-size:0.9rem;">{{ cond.body_part }}</div>
+                    {% if cond.description %}<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">{{ cond.description }}</div>{% endif %}
+                    {% if cond.bleeding_level and cond.bleeding_level != 'none' %}<div style="font-size:0.75rem; color:var(--danger); margin-top:2px;">Bleeding: {{ cond.bleeding_level }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% if scene_notes %}
+            <div style="margin-top:16px; padding:14px; background:rgba(0,229,255,0.03); border-radius:var(--radius-sm); border:1px solid rgba(0,229,255,0.1);">
+                <div class="form-label" style="margin-bottom:6px;">📝 Scene Notes</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary);">{{ scene_notes }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- TAB: Entities -->
+        <div class="tab-content" id="tab-entities">
+            <div class="section-label">NLP Analysis</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Named Entities Found</div>
+            {% if entities and entities|length > 0 %}
+            <div class="data-table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th style="width:140px;">Type</th><th>Value</th></tr></thead>
+                    <tbody class="stagger">
+                        {% for ent in entities %}
+                        <tr>
+                            <td><span style="padding:4px 12px; background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.2); border-radius:20px; font-size:0.78rem; font-weight:600; color:var(--primary); font-family:'Orbitron',monospace;">{{ ent.type }}</span></td>
+                            <td>{{ ent.value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div style="text-align:center; padding:32px; color:var(--text-muted);">🔎 No named entities detected.</div>
+            {% endif %}
+        </div>
+
+        <!-- TAB: Raw Text -->
+        <div class="tab-content" id="tab-text">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div><div class="section-label">Raw Data</div><div class="section-title" style="font-size:1.1rem; margin-bottom:0;">Extracted Text</div></div>
+                <button class="btn-secondary" onclick="copyText()">📋 Copy</button>
+            </div>
+            <textarea readonly class="extracted-text" id="extractedText">{{ report_text }}</textarea>
+        </div>
+
+        {% if evidence_media %}
+        <!-- TAB: Evidence Media -->
+        <div class="tab-content" id="tab-evidence">
+            <div class="section-label">Visual Evidence</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Uploaded Evidence Media ({{ evidence_media|length }} file{{ 's' if evidence_media|length != 1 }})</div>
+
+            <div class="evidence-gallery">
+                {% for media in evidence_media %}
+                <div class="evidence-card">
+                    {% if media.file_type == 'image' %}
+                    <img src="{{ url_for('serve_evidence', report_id=report_id, filename=media.filename) }}"
+                         alt="{{ media.filename }}" onclick="openLightbox(this.src)">
+                    {% elif media.file_type == 'video' %}
+                    <video controls preload="metadata">
+                        <source src="{{ url_for('serve_evidence', report_id=report_id, filename=media.filename) }}">
+                        Your browser does not support video.
+                    </video>
+                    {% endif %}
+                    <div class="evidence-card-body">
+                        <div class="evidence-card-name" title="{{ media.filename }}">{{ media.filename }}</div>
+                        {% if media.file_type == 'image' %}
+                        <span class="evidence-card-badge evidence-badge-image">📷 Image</span>
+                        {% else %}
+                        <span class="evidence-card-badge evidence-badge-video">🎬 Video</span>
+                        {% endif %}
+                        {% if media.ocr_text %}
+                        <div class="evidence-ocr-text">{{ media.ocr_text }}</div>
+                        {% else %}
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; opacity:0.6;">No text detected</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div style="max-width:1100px; width:100%; display:flex; gap:12px; flex-wrap:wrap; margin-top:20px; animation:fadeInUp 0.9s both;">
+        <a href="{{ url_for('upload_file') }}" class="btn-primary"><span>📄</span> Analyze Another</a>
+        <a href="{{ url_for('list_reports') }}" class="btn-secondary">📊 All Reports</a>
+        <button class="btn-secondary" onclick="window.print()">🖨️ Print</button>
+    </div>
+
+    <div style="height:60px;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/three-scene.js') }}"></script>
+<script>
+function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    event.target.classList.add('active');
+}
+function copyText() {
+    const t = document.getElementById('extractedText').value;
+    navigator.clipboard.writeText(t).then(() => { event.target.innerHTML='✅ Copied!'; setTimeout(()=>{event.target.innerHTML='📋 Copy';},2000); });
+}
+
+// Lightbox
+function openLightbox(src) {
+    const overlay = document.getElementById('lightboxOverlay');
+    document.getElementById('lightboxImg').src = src;
+    overlay.classList.add('active');
+}
+function closeLightbox() {
+    document.getElementById('lightboxOverlay').classList.remove('active');
+}
+</script>
+
+<!-- Lightbox Overlay -->
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImg" src="" alt="Evidence">
+</div>
+
 </body>
 </html>

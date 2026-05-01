@@ -1,31 +1,261 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Report Detail - {{ report.filename }}</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #0f1b35; color:#d2e7f7; padding: 40px; }
-    h1 { font-weight: 900; text-align: center; margin-bottom: 30px; }
-    ul { max-width: 800px; margin: auto; padding: 0; list-style-type: none; }
-    li { padding: 10px 0; font-size: 1.2em; border-bottom: 1px solid #354565; }
-    strong { color: #99ccff; }
-    pre { background: #1b2a55; padding: 20px; border-radius: 10px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
-    .back-link { display: block; max-width: 800px; margin: 25px auto; text-align: center; font-weight: bold; color: #99ccff; text-decoration: none; }
-    .back-link:hover { text-decoration: underline; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report #{{ report.id }} — {{ report.filename }} | Forensic AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .risk-badge { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:50px; font-family:'Orbitron',monospace; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; }
+        .risk-LOW { background:rgba(0,255,163,0.1); border:1px solid rgba(0,255,163,0.3); color:var(--success); }
+        .risk-MEDIUM { background:rgba(255,184,48,0.1); border:1px solid rgba(255,184,48,0.3); color:var(--warning); }
+        .risk-HIGH { background:rgba(255,140,0,0.12); border:1px solid rgba(255,140,0,0.35); color:#ff8c00; }
+        .risk-CRITICAL { background:rgba(255,77,106,0.12); border:1px solid rgba(255,77,106,0.35); color:var(--danger); }
+        .risk-dot { width:8px; height:8px; border-radius:50%; animation:pulse 1.5s infinite; }
+        .risk-LOW .risk-dot { background:var(--success); box-shadow:0 0 10px var(--success); }
+        .risk-MEDIUM .risk-dot { background:var(--warning); box-shadow:0 0 10px var(--warning); }
+        .risk-HIGH .risk-dot { background:#ff8c00; box-shadow:0 0 10px #ff8c00; }
+        .risk-CRITICAL .risk-dot { background:var(--danger); box-shadow:0 0 10px var(--danger); }
+        .red-flag { padding:12px 16px; border-radius:var(--radius-sm); margin-bottom:8px; display:flex; align-items:flex-start; gap:10px; }
+        .red-flag-CRITICAL { background:rgba(255,77,106,0.08); border:1px solid rgba(255,77,106,0.25); }
+        .red-flag-HIGH { background:rgba(255,140,0,0.08); border:1px solid rgba(255,140,0,0.2); }
+        .red-flag-MEDIUM { background:rgba(255,184,48,0.06); border:1px solid rgba(255,184,48,0.2); }
+
+        /* Evidence Gallery */
+        .evidence-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+        .evidence-card {
+            border-radius:var(--radius-md); overflow:hidden; border:1px solid rgba(181,55,242,0.15);
+            background:rgba(3,13,36,0.6); transition:all 0.3s;
+        }
+        .evidence-card:hover { border-color:var(--accent); box-shadow:0 4px 20px rgba(181,55,242,0.1); }
+        .evidence-card img { width:100%; height:150px; object-fit:cover; display:block; cursor:pointer; }
+        .evidence-card video { width:100%; max-height:200px; display:block; background:#000; }
+        .evidence-card-body { padding:12px; }
+        .evidence-card-name { font-size:0.78rem; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+        .evidence-card-badge {
+            display:inline-flex; align-items:center; gap:4px; padding:2px 10px;
+            border-radius:20px; font-size:0.65rem; font-weight:700; text-transform:uppercase;
+        }
+        .evidence-badge-image { background:rgba(0,229,255,0.1); color:var(--primary); }
+        .evidence-badge-video { background:rgba(181,55,242,0.1); color:var(--accent); }
+        .evidence-ocr-text {
+            margin-top:8px; padding:8px; background:rgba(0,229,255,0.03);
+            border:1px solid rgba(0,229,255,0.1); border-radius:var(--radius-sm);
+            font-size:0.72rem; color:var(--text-muted); max-height:80px;
+            overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+        }
+        .lightbox-overlay {
+            display:none; position:fixed; top:0; left:0; width:100vw; height:100vh;
+            background:rgba(0,0,0,0.92); z-index:9999; align-items:center;
+            justify-content:center; cursor:pointer;
+        }
+        .lightbox-overlay.active { display:flex; }
+        .lightbox-overlay img { max-width:90vw; max-height:90vh; border-radius:8px; box-shadow:0 0 40px rgba(0,229,255,0.15); }
+        .lightbox-close {
+            position:absolute; top:20px; right:30px; font-size:2rem; color:white;
+            cursor:pointer; background:none; border:none; z-index:10000;
+        }
+    </style>
 </head>
 <body>
-  <h1>Report Details: {{ report.filename }}</h1>
-  <ul>
-    <li><strong>Name:</strong> {{ report.Name }}</li>
-    <li><strong>Age:</strong> {{ report.Age }}</li>
-    <li><strong>Gender:</strong> {{ report.Gender }}</li>
-    <li><strong>Address:</strong> {{ report.Address }}</li>
-    <li><strong>Date of Death:</strong> {{ report['Date of Death'] }}</li>
-    <li><strong>Cause of Death:</strong> {{ report['Cause of Death'] }}</li>
-    <li><strong>Examiner:</strong> {{ report.Examiner }}</li>
-    <li><strong>Extracted Text:</strong> <pre>{{ report.extracted_text }}</pre></li>
-  </ul>
-  <a href="{{ url_for('list_reports') }}" class="back-link">Back to Reports List</a>
+
+<canvas id="three-canvas"></canvas>
+
+<div class="page-wrapper">
+
+    <nav class="nav-bar">
+        <a href="{{ url_for('upload_file') }}" class="nav-brand">
+            <img src="{{ url_for('static', filename='images/forensic_hero_logo.png') }}" alt="Logo">
+            <span class="nav-brand-text">FORENSIC AI</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('upload_file') }}" class="nav-link">Upload</a>
+            <a href="{{ url_for('list_reports') }}" class="nav-link active">Reports</a>
+        </div>
+    </nav>
+
+    <div class="page-hero" style="margin-bottom:16px;">
+        <div class="section-label" style="justify-content:center;">Report #{{ report.id }}</div>
+        <h1>{{ report.filename }}</h1>
+    </div>
+
+    {% if report.tampering_risk %}
+    <div style="display:flex; justify-content:center; margin-bottom:24px; animation:fadeInUp 0.5s both;">
+        <div class="risk-badge risk-{{ report.tampering_risk }}">
+            <span class="risk-dot"></span>
+            TAMPERING RISK: {{ report.tampering_risk }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="max-width:1000px; width:100%;">
+
+        {% if verification %}
+        <!-- Verification Overview -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; animation:fadeInUp 0.6s both;">
+            <div class="glass-card" style="text-align:center; padding:20px;">
+                <div style="font-family:'Orbitron',monospace; font-size:2rem; font-weight:900; color:{% if verification.consistency_score >= 70 %}var(--success){% elif verification.consistency_score >= 40 %}var(--warning){% else %}var(--danger){% endif %};">{{ verification.consistency_score|round|int }}%</div>
+                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em;">Consistency</div>
+            </div>
+            <div class="glass-card" style="padding:20px;">
+                <div class="section-label">AI Verdict</div>
+                <div style="font-family:'Orbitron',monospace; font-size:0.85rem; color:var(--primary); margin-top:6px;">{{ verification.ai_cause_of_death }}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Confidence: {{ verification.ai_confidence }}%</div>
+            </div>
+            <div class="glass-card" style="padding:20px;">
+                <div class="section-label">Report COD</div>
+                <div style="font-family:'Orbitron',monospace; font-size:0.85rem; color:{% if verification.cod_match %}var(--success){% else %}var(--danger){% endif %}; margin-top:6px;">{{ report.cause_of_death or '—' }}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">{{ 'Matches ✅' if verification.cod_match else 'Mismatch ❌' }}</div>
+            </div>
+        </div>
+
+        <!-- Red Flags -->
+        {% if verification.red_flags_json and verification.red_flags_json|length > 0 %}
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.7s both;">
+            <div class="section-label">🚨 Red Flags</div>
+            <div style="margin-top:10px;">
+                {% for flag in verification.red_flags_json %}
+                <div class="red-flag red-flag-{{ flag.severity }}">
+                    <span>{% if flag.severity == 'CRITICAL' %}🔴{% elif flag.severity == 'HIGH' %}🟠{% else %}🟡{% endif %}</span>
+                    <div>
+                        <div style="font-weight:700; font-size:0.85rem;">{{ flag.name }} <span style="font-size:0.7rem; opacity:0.7;">[{{ flag.severity }}]</span></div>
+                        <div style="font-size:0.82rem; color:var(--text-secondary);">{{ flag.message }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- AI Reasoning -->
+        {% if verification.ai_reasoning_json %}
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.8s both;">
+            <div class="section-label">🧬 AI Reasoning</div>
+            <div style="margin-top:10px;">
+                {% for line in verification.ai_reasoning_json %}
+                <div style="padding:5px 0; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid rgba(0,229,255,0.05);">{{ line }}</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <!-- Report Details -->
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.7s both;">
+            <div class="section-label">Report Data</div>
+            <div class="section-title" style="font-size:1.1rem; margin-bottom:16px;">Extracted Information</div>
+            <div class="detail-grid stagger">
+                <div class="detail-item"><div class="detail-label">👤 Name</div><div class="detail-value">{{ report.name or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">📅 Age</div><div class="detail-value">{{ report.age or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">⚧ Gender</div><div class="detail-value">{{ report.gender or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">📍 Address</div><div class="detail-value">{{ report.address or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">💀 Date of Death</div><div class="detail-value">{{ report.date_of_death or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">⚕️ Report COD</div><div class="detail-value" style="color:var(--danger);">{{ report.cause_of_death or '—' }}</div></div>
+                <div class="detail-item"><div class="detail-label">🩺 Examiner</div><div class="detail-value">{{ report.examiner or '—' }}</div></div>
+                {% if report.ai_cause_of_death %}
+                <div class="detail-item"><div class="detail-label">🤖 AI Cause of Death</div><div class="detail-value" style="color:var(--primary);">{{ report.ai_cause_of_death }}</div></div>
+                {% endif %}
+                {% if report.doctor_comments %}<div class="detail-item" style="grid-column:span 2;"><div class="detail-label">💬 Doctor Comments</div><div class="detail-value" style="font-size:0.9rem;">{{ report.doctor_comments }}</div></div>{% endif %}
+                {% if report.lab_results %}<div class="detail-item" style="grid-column:span 2;"><div class="detail-label">🧪 Lab Results</div><div class="detail-value">{{ report.lab_results }}</div></div>{% endif %}
+            </div>
+        </div>
+
+        {% if body_conditions %}
+        <!-- Body Conditions -->
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.8s both;">
+            <div class="section-label">🩹 Body Conditions Observed</div>
+            <div class="detail-grid stagger" style="margin-top:12px;">
+                {% for cond in body_conditions %}
+                <div class="detail-item">
+                    <div class="detail-label" style="color:{% if cond.severity in ['critical','fatal'] %}var(--danger){% elif cond.severity == 'severe' %}#ff8c00{% else %}var(--text-muted){% endif %};">
+                        {{ cond.severity|upper }} — {{ cond.injury_type }}
+                    </div>
+                    <div class="detail-value" style="font-size:0.9rem;">{{ cond.body_part }}</div>
+                    {% if cond.description %}<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:4px;">{{ cond.description }}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if evidence_media %}
+        <!-- Evidence Media -->
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.85s both;">
+            <div class="section-label">📸 Evidence Media ({{ evidence_media|length }})</div>
+            <div class="evidence-gallery" style="margin-top:12px;">
+                {% for media in evidence_media %}
+                <div class="evidence-card">
+                    {% if media.file_type == 'image' %}
+                    <img src="{{ url_for('serve_evidence', report_id=report.id, filename=media.filename) }}"
+                         alt="{{ media.filename }}" onclick="openLightbox(this.src)">
+                    {% elif media.file_type == 'video' %}
+                    <video controls preload="metadata">
+                        <source src="{{ url_for('serve_evidence', report_id=report.id, filename=media.filename) }}">
+                    </video>
+                    {% endif %}
+                    <div class="evidence-card-body">
+                        <div class="evidence-card-name" title="{{ media.filename }}">{{ media.filename }}</div>
+                        {% if media.file_type == 'image' %}
+                        <span class="evidence-card-badge evidence-badge-image">📷 Image</span>
+                        {% else %}
+                        <span class="evidence-card-badge evidence-badge-video">🎬 Video</span>
+                        {% endif %}
+                        {% if media.ocr_text %}
+                        <div class="evidence-ocr-text">{{ media.ocr_text }}</div>
+                        {% else %}
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; opacity:0.6;">No text detected</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Extracted Text -->
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.9s both;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div class="section-label">📝 Extracted Text</div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn-secondary" onclick="copyText()">📋 Copy</button>
+                    <button class="btn-secondary" onclick="window.print()">🖨️ Print</button>
+                </div>
+            </div>
+            <textarea readonly class="extracted-text" id="extractedText">{{ report.extracted_text }}</textarea>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="{{ url_for('list_reports') }}" class="btn-secondary">← All Reports</a>
+            <a href="{{ url_for('upload_file') }}" class="btn-primary"><span>📄</span> New Analysis</a>
+        </div>
+    </div>
+
+    <div style="height:60px;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/three-scene.js') }}"></script>
+<script>
+function copyText() {
+    navigator.clipboard.writeText(document.getElementById('extractedText').value).then(() => {
+        event.target.innerHTML='✅ Copied!'; setTimeout(()=>{event.target.innerHTML='📋 Copy';},2000);
+    });
+}
+function openLightbox(src) {
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightboxOverlay').classList.add('active');
+}
+function closeLightbox() {
+    document.getElementById('lightboxOverlay').classList.remove('active');
+}
+</script>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImg" src="" alt="Evidence">
+</div>
+
 </body>
 </html>

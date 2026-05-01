@@ -1,50 +1,129 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Saved Forensic Reports</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #0f1b35; color:#d2e7f7; }
-    table { width: 90%; margin: 30px auto; border-collapse: collapse; }
-    th, td { padding: 12px; border: 1px solid #3e4b72; text-align: center; }
-    th { background-color: #2a3a73; }
-    a { color: #99ccff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    h1 { text-align: center; margin-top: 30px; }
-    .container { max-width: 1200px; margin: auto; }
-    .upload-link { display: block; width: 90%; margin: 20px auto; text-align: center; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Reports — Forensic AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .risk-pill { padding:4px 14px; border-radius:20px; font-size:0.72rem; font-weight:700; font-family:'Orbitron',monospace; letter-spacing:0.05em; }
+        .risk-pill-LOW { background:rgba(0,255,163,0.1); color:var(--success); border:1px solid rgba(0,255,163,0.25); }
+        .risk-pill-MEDIUM { background:rgba(255,184,48,0.1); color:var(--warning); border:1px solid rgba(255,184,48,0.25); }
+        .risk-pill-HIGH { background:rgba(255,140,0,0.1); color:#ff8c00; border:1px solid rgba(255,140,0,0.25); }
+        .risk-pill-CRITICAL { background:rgba(255,77,106,0.1); color:var(--danger); border:1px solid rgba(255,77,106,0.25); }
+        .score-mini { font-family:'Orbitron',monospace; font-size:0.85rem; font-weight:700; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Saved Forensic Reports</h1>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Filename</th>
-          <th>Name</th>
-          <th>Age</th>
-          <th>Gender</th>
-          <th>Date of Death</th>
-          <th>Details</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in reports %}
-        <tr>
-          <td>{{ r[0] }}</td>
-          <td>{{ r[1] }}</td>
-          <td>{{ r[2] }}</td>
-          <td>{{ r[3] }}</td>
-          <td>{{ r[4] }}</td>
-          <td>{{ r[5] }}</td>
-          <td><a href="{{ url_for('report_detail', report_id=r[0]) }}">View</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <a href="{{ url_for('upload_file') }}" class="upload-link">Upload New Report</a>
-  </div>
+
+<canvas id="three-canvas"></canvas>
+
+<div class="page-wrapper">
+
+    <nav class="nav-bar">
+        <a href="{{ url_for('upload_file') }}" class="nav-brand">
+            <img src="{{ url_for('static', filename='images/forensic_hero_logo.png') }}" alt="Logo">
+            <span class="nav-brand-text">FORENSIC AI</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('upload_file') }}" class="nav-link">Upload</a>
+            <a href="{{ url_for('list_reports') }}" class="nav-link active">Reports</a>
+        </div>
+    </nav>
+
+    <div class="page-hero">
+        <div class="section-label" style="justify-content:center;">Database</div>
+        <h1>Saved Forensic Reports</h1>
+        <p>Browse all analyzed reports with tampering risk and consistency scores.</p>
+    </div>
+
+    <!-- Stats -->
+    <div style="max-width:1200px; width:100%;">
+        <div class="stats-bar" style="animation:fadeInUp 0.6s both;">
+            <div class="stat-chip">
+                <span class="stat-icon">📊</span>
+                <div><div class="stat-value">{{ reports|length }}</div><div class="stat-label">Total Reports</div></div>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-icon">🚨</span>
+                <div>
+                    <div class="stat-value">{{ reports|selectattr(6)|list|length }}</div>
+                    <div class="stat-label">Verified</div>
+                </div>
+            </div>
+            <div class="stat-chip">
+                <span class="stat-icon">🔬</span>
+                <div><div class="stat-value">AI</div><div class="stat-label">Cross-Verification</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="glass-card" style="max-width:1200px; width:100%; animation:fadeInUp 0.8s both;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+            <div><div class="section-label">Records</div><div class="section-title" style="font-size:1.1rem; margin-bottom:0;">All Reports</div></div>
+            <a href="{{ url_for('upload_file') }}" class="btn-primary" style="padding:10px 20px; font-size:0.8rem;">➕ New Analysis</a>
+        </div>
+
+        {% if reports|length > 0 %}
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Filename</th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Gender</th>
+                        <th>Risk</th>
+                        <th>Score</th>
+                        <th>AI Cause</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody class="stagger">
+                    {% for r in reports %}
+                    <tr>
+                        <td><span style="font-family:'Orbitron',monospace; font-size:0.8rem; color:var(--accent);">#{{ r[0] }}</span></td>
+                        <td style="font-weight:600; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r[1] }}</td>
+                        <td>{{ r[2] or '—' }}</td>
+                        <td>{{ r[3] or '—' }}</td>
+                        <td>{{ r[4] or '—' }}</td>
+                        <td>
+                            {% if r[6] %}
+                            <span class="risk-pill risk-pill-{{ r[6] }}">{{ r[6] }}</span>
+                            {% else %}
+                            <span style="color:var(--text-muted); font-size:0.8rem;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r[7] is not none %}
+                            <span class="score-mini" style="color:{% if r[7] >= 70 %}var(--success){% elif r[7] >= 40 %}var(--warning){% else %}var(--danger){% endif %};">{{ r[7]|round|int }}%</span>
+                            {% else %}
+                            <span style="color:var(--text-muted);">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.8rem; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ r[8] or '—' }}</td>
+                        <td><a href="{{ url_for('report_detail', report_id=r[0]) }}" class="table-link">🔍 View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:48px;">
+            <span style="font-size:3rem; display:block; margin-bottom:12px;">📭</span>
+            <div style="font-family:'Orbitron',monospace; color:var(--text-secondary); margin-bottom:20px;">No reports yet</div>
+            <a href="{{ url_for('upload_file') }}" class="btn-primary">📄 Upload Report</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div style="height:60px;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/three-scene.js') }}"></script>
+
 </body>
 </html>

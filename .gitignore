@@ -1,10 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Data & uploads
 data/
-notebooks/
+uploads/
+app/uploads/
+app/data/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Models (downloaded at runtime)
+models/
+
+# Misc
 *.csv
 *.pkl
 *.h5
-*.jpg
-*.png
-__pycache__/
-*.pyc
-.env
+*.lnk
+ngrok.exe
+app/ngrok.exe
+Procfile_backup
+interview_questions_and_answers.txt
+project_summary.txt
