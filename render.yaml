@@ -1,13 +1,10 @@
 services:
   - type: web
     name: forensic-report-analyzer
-    runtime: docker
+    runtime: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: cd app && gunicorn --bind 0.0.0.0:$PORT --timeout 300 --workers 1 --threads 2 main:app
     plan: free
-    dockerfilePath: ./Dockerfile
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11"
-    disk:
-      name: forensic-data
-      mountPath: /app/app/data
-      sizeGB: 1
+        value: "3.11.0"
