@@ -99,6 +99,13 @@
             <a href="{{ url_for('upload_file') }}" class="nav-link">Upload</a>
             <a href="{{ url_for('list_reports') }}" class="nav-link">Reports</a>
         </div>
+        <div class="live-badge" id="liveBadge" title="Live server traffic">
+            <span class="live-dot"></span>
+            <span class="live-count" id="liveCount">-</span>
+            <span class="live-label">LIVE</span>
+            <span class="live-divider"></span>
+            <span class="total-visits">👁 <span class="total-count" id="totalCount">-</span></span>
+        </div>
     </nav>
 
     <div class="page-hero" style="margin-bottom:16px;">
@@ -410,6 +417,17 @@ function closeLightbox() {
     <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
     <img id="lightboxImg" src="" alt="Evidence">
 </div>
+
+<script>
+function updateVisitorCount() {
+    fetch('/api/visitors').then(r => r.json()).then(data => {
+        document.getElementById('liveCount').textContent = data.live;
+        document.getElementById('totalCount').textContent = data.total;
+    }).catch(() => {});
+}
+updateVisitorCount();
+setInterval(updateVisitorCount, 10000);
+</script>
 
 </body>
 </html>

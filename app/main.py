@@ -1,9 +1,10 @@
 import os
 import json
 import yaml
-from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+import threading
 
 import models
 from utils.nlp_utils import extract_forensic_info, extract_entities, extract_injuries_from_text
@@ -39,6 +40,40 @@ EVIDENCE_MAX_FRAMES = EVIDENCE_CONFIG.get('max_frames', 10)
 models.DB_PATH = DB_PATH
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 models.init_db()
+
+# ── Live Visitor Tracking ──
+_visitor_lock = threading.Lock()
+_active_visitors = {}  # ip -> last_seen timestamp
+_total_visits = 0
+
+
+@app.before_request
+def track_visitor():
+    """Track unique visitors and total page views."""
+    global _total_visits
+    # Skip static files and API calls
+    if request.path.startswith('/static') or request.path.startswith('/api/'):
+        return
+    import time
+    ip = request.remote_addr or 'unknown'
+    with _visitor_lock:
+        _active_visitors[ip] = time.time()
+        _total_visits += 1
+        # Clean up visitors older than 5 minutes (not "live" anymore)
+        cutoff = time.time() - 300
+        stale = [k for k, v in _active_visitors.items() if v < cutoff]
+        for k in stale:
+            del _active_visitors[k]
+
+
+@app.route('/api/visitors')
+def api_visitors():
+    """Return live visitor count and total visits."""
+    with _visitor_lock:
+        return jsonify({
+            'live': len(_active_visitors),
+            'total': _total_visits
+        })
 
 
 def allowed_file(filename):
