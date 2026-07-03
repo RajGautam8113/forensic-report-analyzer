@@ -1,15 +1,19 @@
 import os
 import json
 import yaml
-from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, jsonify
+import hashlib
+from flask import Flask, request, render_template, redirect, url_for, flash, send_from_directory, jsonify, session
+from functools import wraps
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import threading
+import time as _time
 
 import models
 from utils.nlp_utils import extract_forensic_info, extract_entities, extract_injuries_from_text
 from utils.cross_verifier import cross_verify, extract_injuries_from_report_text
 from utils.media_processor import process_evidence_file, get_media_type
+from utils.consistency_engine import run_consistency_analysis
 from docx import Document
 import pytesseract
 from PIL import Image
@@ -23,6 +27,9 @@ with open(config_path, 'r') as f:
 
 app = Flask(__name__)
 app.secret_key = config['app']['secret_key']
+
+# Admin password for protected routes (Reports section)
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'forensic@admin2026')
 
 UPLOAD_FOLDER = config['upload']['folder']
 ALLOWED_EXTENSIONS = set(config['upload']['allowed_extensions'])
@@ -43,35 +50,57 @@ models.init_db()
 
 # ── Live Visitor Tracking ──
 _visitor_lock = threading.Lock()
-_active_visitors = {}  # ip -> last_seen timestamp
+_active_visitors = {}   # ip -> last_seen timestamp (for "live" badge)
+_session_tracker = {}   # ip -> last_counted timestamp (for total visits)
 _total_visits = 0
+
+_LIVE_WINDOW = 5        # seconds — visitor considered "live" for this duration
+_SESSION_TIMEOUT = 60   # seconds — same device counts as new visit only after this
 
 
 @app.before_request
 def track_visitor():
-    """Track unique visitors and total page views."""
+    """Track unique visitors with per-device session dedup."""
     global _total_visits
     # Skip static files and API calls
     if request.path.startswith('/static') or request.path.startswith('/api/'):
         return
     import time
+    now = time.time()
     ip = request.remote_addr or 'unknown'
     with _visitor_lock:
-        _active_visitors[ip] = time.time()
-        _total_visits += 1
-        # Clean up visitors older than 5 minutes (not "live" anymore)
-        cutoff = time.time() - 300
-        stale = [k for k, v in _active_visitors.items() if v < cutoff]
-        for k in stale:
+        # ── Update live presence ──
+        _active_visitors[ip] = now
+
+        # ── Session-based total count (1 count per device per SESSION_TIMEOUT) ──
+        last_counted = _session_tracker.get(ip, 0)
+        if now - last_counted >= _SESSION_TIMEOUT:
+            _total_visits += 1
+            _session_tracker[ip] = now
+
+        # ── Cleanup stale entries ──
+        live_cutoff = now - _LIVE_WINDOW
+        stale_live = [k for k, v in _active_visitors.items() if v < live_cutoff]
+        for k in stale_live:
             del _active_visitors[k]
+
+        session_cutoff = now - _SESSION_TIMEOUT * 2
+        stale_session = [k for k, v in _session_tracker.items() if v < session_cutoff]
+        for k in stale_session:
+            del _session_tracker[k]
 
 
 @app.route('/api/visitors')
 def api_visitors():
     """Return live visitor count and total visits."""
+    import time
+    now = time.time()
     with _visitor_lock:
+        # Re-check live window at read time for accuracy
+        live_cutoff = now - _LIVE_WINDOW
+        live = sum(1 for v in _active_visitors.values() if v >= live_cutoff)
         return jsonify({
-            'live': len(_active_visitors),
+            'live': live,
             'total': _total_visits
         })
 
@@ -164,7 +193,7 @@ ANTI_PATTERNS = [
     'invoice', 'receipt', 'bank statement', 'balance sheet',
     'profit and loss', 'tax return', 'financial statement',
     'purchase order', 'quotation', 'billing address',
-    # Academic
+     # Academic
     'assignment', 'semester', 'gpa', 'cgpa', 'transcript',
     'thesis', 'dissertation', 'course outline', 'syllabus',
     'lecture notes', 'bibliography',
@@ -363,6 +392,16 @@ def upload_file():
         save_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(save_path)
 
+        # -------- Compute file hash (Upgrade 7) --------
+        sha256 = hashlib.sha256()
+        with open(save_path, 'rb') as fh:
+            for chunk in iter(lambda: fh.read(8192), b''):
+                sha256.update(chunk)
+        file_hash = sha256.hexdigest()
+
+        # -------- Track processing time (Upgrade 8) --------
+        proc_start = _time.time()
+
         text = extract_report_text(save_path)
         if not text:
             flash("Unable to extract text from the file.")
@@ -387,6 +426,14 @@ def upload_file():
         # -------- Extract injuries mentioned in report --------
         report_injuries = extract_injuries_from_text(text)
 
+        # -------- Consistency Engine (Upgrade 2 + 3) — runs on EVERY report --------
+        consistency_result = run_consistency_analysis(
+            text=text,
+            forensic_info=forensic_info,
+            entities=entities,
+            report_injuries=report_injuries,
+        )
+
         # -------- Cross-Verification (only if body conditions provided) --------
         verification = None
         evidence_texts = []
@@ -408,6 +455,11 @@ def upload_file():
             'doctor_comments': forensic_info.get('doctor_comments'),
             'medical_history': forensic_info.get('medical_history'),
             'lab_results': forensic_info.get('lab_results'),
+            # Upgrade 7 — new fields
+            'extracted_entities_json': json.dumps(entities),
+            'validation_flags_json': json.dumps(consistency_result.get('flags', [])),
+            'confidence_level': consistency_result.get('confidence', 'Medium'),
+            'file_hash': file_hash,
         }
 
         report_id = models.insert_report(data_to_save)
@@ -460,6 +512,9 @@ def upload_file():
         if verification:
             models.insert_verification(report_id, verification)
 
+        # -------- Processing time --------
+        proc_time = round(_time.time() - proc_start, 2)
+
         # -------- Render result UI --------
         return render_template(
             'result.html',
@@ -473,18 +528,63 @@ def upload_file():
             scene_notes=scene_notes,
             report_id=report_id,
             evidence_media=evidence_media,
+            consistency_result=consistency_result,
+            file_hash=file_hash,
+            processing_time=proc_time,
         )
 
     return render_template('index.html')
 
 
+# ── Admin Authentication ──
+def admin_required(f):
+    """Decorator to protect routes — only logged-in admin can access."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash('🔒 Please login to access reports.')
+            return redirect(url_for('admin_login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated
+
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """Admin login page."""
+    if session.get('admin_logged_in'):
+        return redirect(url_for('list_reports'))
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            session.permanent = True
+            flash('✅ Login successful. Welcome, Admin!')
+            next_url = request.args.get('next', url_for('list_reports'))
+            return redirect(next_url)
+        else:
+            flash('❌ Incorrect password. Access denied.')
+
+    return render_template('admin_login.html')
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Admin logout."""
+    session.pop('admin_logged_in', None)
+    flash('🔓 Logged out successfully.')
+    return redirect(url_for('upload_file'))
+
+
 @app.route('/reports')
+@admin_required
 def list_reports():
     reports = models.get_all_reports()
     return render_template('reports_list.html', reports=reports)
 
 
 @app.route('/reports/<int:report_id>')
+@admin_required
 def report_detail(report_id):
     report = models.get_report_by_id(report_id)
     if not report:
@@ -505,6 +605,7 @@ def report_detail(report_id):
 
 
 @app.route('/evidence/<int:report_id>/<filename>')
+@admin_required
 def serve_evidence(report_id, filename):
     """Serve evidence media files."""
     evidence_dir = os.path.join(UPLOAD_FOLDER, 'evidence', str(report_id))

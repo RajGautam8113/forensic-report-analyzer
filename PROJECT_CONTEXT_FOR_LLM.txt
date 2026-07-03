@@ -1,0 +1,102 @@
+# Forensic Report Analyzer - Complete Project Context
+
+This document contains the complete context, architecture, problem statements, solutions, and technical details of the "Forensic Report Analyzer" project. You can use this document as a prompt context for any LLM to generate a detailed Project Synopsis, Project Report, or Presentation for college/university submission.
+
+---
+
+## 1. Project Overview
+- **Project Name:** AI-powered Forensic Report Analyzer
+- **Purpose:** To detect tampering, inconsistencies, or manipulation in official postmortem/forensic reports. It does this by cross-verifying the uploaded forensic report against on-the-spot body condition observations (entered by the user/investigator).
+- **Core Concept:** Often, what is documented in a medical/forensic report may differ from the actual physical evidence on the body due to tampering or corruption. This system acts as a digital auditor to flag these inconsistencies.
+
+---
+
+## 2. Technology Stack
+- **Backend:** Python, Flask, Gunicorn
+- **Database:** SQLite (for storing reports, evidence, and verifications)
+- **Frontend:** HTML5, CSS3 (Glassmorphism UI), JavaScript (Three.js for 3D animated matrix-style/DNA background)
+- **Machine Learning & NLP:** spaCy (en_core_web_sm) for Named Entity Recognition (NER) and NLP extraction.
+- **Computer Vision & OCR:** Tesseract OCR (pytesseract), Pillow, OpenCV (opencv-python-headless) for extracting text from evidence images/videos.
+- **PDF/Doc Processing:** pdfplumber, python-docx
+- **Deployment:** Docker, Render.com (Cloud Hosting)
+
+---
+
+## 3. Key System Modules & Features
+
+### A. Multi-Layer File Validation Engine (5-Layer Scoring System)
+To prevent users from uploading random files (like resumes or invoices), the system evaluates the document using a 5-layer validation system:
+1. **Length Check:** Must be long enough to be a detailed report.
+2. **Mandatory Keywords:** Checks for terms like "autopsy", "postmortem", "cause of death".
+3. **Medical Terminology Density:** Scores the document based on hits for terms like "laceration", "rigor mortis", "toxicology".
+4. **Anti-Pattern Detection:** Rejects documents containing terms like "resume", "invoice", "shopping cart".
+5. **Structural Patterns:** Checks for standard medical report headers like "External Examination", "Internal Organs".
+Files scoring below 40/100 are rejected.
+
+### B. NLP Information Extraction
+Uses `spaCy` and custom regex rules to extract:
+- Deceased Name, Age, Gender
+- Date and Time of Death
+- Examiner Details
+- Cause of Death
+- FIR Info
+
+### C. On-the-Spot Body Condition Input
+Allows investigators to input the actual physical condition of the body:
+- Injury type (fracture, laceration, bruise)
+- Body part
+- Severity (mild, moderate, severe, fatal)
+- Bleeding level
+- Additional scene notes
+
+### D. Evidence Media Upload & OCR Processing
+- Supports uploading images (JPG, PNG) and videos (MP4, AVI) of the crime scene or body.
+- Runs **Tesseract OCR** on images to extract textual evidence.
+- For videos, it extracts keyframes (every 2 seconds) and runs OCR on each frame.
+- Extracted text feeds into the Cross-Verifier.
+
+### E. Cross-Verification Engine & Injury Analyzer
+The core logic that compares the **Uploaded Report** vs **Body Conditions**:
+- **Injury Analyzer:** Rule-based medical logic mapping 20+ injury types to probable causes of death.
+- **Cross-Verifier:** Matches the findings from the report against the physical body conditions and the OCR text from evidence media.
+- **Outputs:**
+  - Consistency Score (0-100%)
+  - Tampering Risk Level (LOW, MEDIUM, HIGH, CRITICAL)
+  - Red Flags (Mismatch identifiers)
+  - AI Verdict (Independent cause-of-death determination)
+
+### F. 3D Premium UI & Admin Dashboard
+- **Frontend:** Built with Three.js featuring a 2,500+ floating particle nebula background, rotating DNA double helix, and glowing spheres with parallax effects.
+- **Admin Panel:** Secured by a password, allows admins to view the archive of all verified reports, their risk scores, and attached media.
+
+---
+
+## 4. Problems Faced and Solutions Implemented
+
+1. **Problem:** Basic 2D UI lacking a professional feel.
+   **Solution:** Integrated Three.js for a 3D animated, glassmorphism-styled frontend.
+2. **Problem:** System accepted any file (e.g., resumes) as a report.
+   **Solution:** Implemented the 5-Layer Scoring System for medical file validation.
+3. **Problem:** Report analyzed in isolation; no way to detect tampering.
+   **Solution:** Added a multi-step form to input on-the-spot body conditions for cross-checking.
+4. **Problem:** No cross-verification logic.
+   **Solution:** Built the Cross-Verifier and Injury Analyzer engines to calculate consistency and tampering risk.
+5. **Problem:** Inability to attach visual evidence.
+   **Solution:** Added media upload with OCR capabilities for images and videos.
+6. **Problem:** Deployment failure due to heavy OCR libraries (EasyOCR + PyTorch taking ~2.5GB).
+   **Solution:** Migrated to Tesseract OCR, reducing dependency size to ~25MB and allowing successful cloud deployment.
+7. **Problem:** System only worked locally.
+   **Solution:** Containerized with Docker and deployed to Render.com for 24/7 access.
+
+---
+
+## 5. Workflow/User Journey
+1. **Upload:** User uploads a postmortem report (PDF/TXT/DOCX/Image).
+2. **Evidence & Conditions:** User inputs physical injuries observed and uploads scene photos/videos.
+3. **Processing:** System validates the report, extracts text, runs OCR on evidence, and passes data to the verification engine.
+4. **Results:** System displays extracted forensic details, a Tampering Risk level, a Consistency Score, and any detected red flags.
+5. **Archiving:** The report and its analysis are saved in the SQLite database for admin review.
+
+---
+**Instruction for LLM:**
+Use all the information provided above to generate whatever the user asks for (e.g., a formal project synopsis, an architectural report, an IEEE format paper, or presentation slides). Ensure you highlight the ML/NLP integration, the 5-layer validation, and the cross-verification logic as the core USPs of the project.

@@ -41,6 +41,11 @@ def init_db():
             ('medical_history', 'TEXT'),
             ('lab_results', 'TEXT'),
             ('created_at', 'TEXT'),
+            # Upgrade 7 — new fields
+            ('extracted_entities_json', 'TEXT'),
+            ('validation_flags_json', 'TEXT'),
+            ('confidence_level', 'TEXT'),
+            ('file_hash', 'TEXT'),
         ]
         for col_name, col_type in new_columns:
             try:
@@ -107,9 +112,11 @@ def insert_report(data):
                 date_of_death, cause_of_death, examiner,
                 ai_cause_of_death, tampering_risk, consistency_score,
                 event_type, time_of_death, fir_info, doctor_comments,
-                medical_history, lab_results, created_at
+                medical_history, lab_results, created_at,
+                extracted_entities_json, validation_flags_json,
+                confidence_level, file_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             data.get('filename'),
             data.get('extracted_text'),
@@ -130,6 +137,10 @@ def insert_report(data):
             data.get('medical_history'),
             data.get('lab_results'),
             datetime.now().isoformat(),
+            data.get('extracted_entities_json'),
+            data.get('validation_flags_json'),
+            data.get('confidence_level'),
+            data.get('file_hash'),
         ))
         conn.commit()
         return cursor.lastrowid

@@ -1,10 +1,11 @@
 import re
 import spacy
+import os
 
-# IMPORTANT: ek baar terminal me chalana:
-#   python -m spacy download en_core_web_sm
-nlp = spacy.load("en_core_web_sm")
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "en_core_web_sm")
 
+nlp = spacy.load(MODEL_PATH)
 
 def extract_forensic_info(text: str) -> dict:
     """

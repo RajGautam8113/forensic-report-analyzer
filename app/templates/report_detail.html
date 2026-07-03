@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report #{{ report.id }} — {{ report.filename }} | Forensic AI</title>
+    <title>Case #{{ report.id }} — {{ report.filename }} | Forensic Consistency & Evidence Validator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <style>
         .risk-badge { display:inline-flex; align-items:center; gap:8px; padding:10px 24px; border-radius:50px; font-family:'Orbitron',monospace; font-size:0.8rem; font-weight:700; letter-spacing:0.08em; }
@@ -272,7 +272,7 @@ function updateVisitorCount() {
     }).catch(() => {});
 }
 updateVisitorCount();
-setInterval(updateVisitorCount, 10000);
+setInterval(updateVisitorCount, 3000);
 </script>
 
 </body>

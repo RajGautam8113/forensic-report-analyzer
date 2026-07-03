@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin login — Forensic Report Analyzer">
+    <title>Admin Login — Forensic AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <style>
+        .login-container {
+            max-width: 440px;
+            width: 100%;
+            animation: fadeInUp 0.8s both;
+            animation-delay: 0.2s;
+        }
+        .login-icon {
+            font-size: 3.5rem;
+            text-align: center;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.5));
+            animation: float 3s ease-in-out infinite;
+        }
+        .login-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary);
+            text-align: center;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+        }
+        .login-subtitle {
+            text-align: center;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+        .password-field-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .password-input {
+            width: 100%;
+            padding: 16px 52px 16px 20px;
+            background: rgba(3, 13, 36, 0.8);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            letter-spacing: 0.15em;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+        .password-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.15);
+        }
+        .password-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            font-family: 'Inter', sans-serif;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+            padding: 4px;
+        }
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            border: none;
+            border-radius: var(--radius-md);
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.2), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255,255,255,0.15), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.35), 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        .login-btn:hover::before {
+            transform: translateX(100%);
+        }
+        .login-btn:active {
+            transform: translateY(-1px);
+        }
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .login-footer a:hover {
+            color: #fff;
+        }
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(0, 229, 255, 0.05);
+            border: 1px solid rgba(0, 229, 255, 0.1);
+            border-radius: 50px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            margin: 20px auto 0;
+            letter-spacing: 0.08em;
+        }
+        .security-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+            animation: livePulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="three-canvas"></canvas>
+
+<div class="page-wrapper">
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <a href="{{ url_for('upload_file') }}" class="nav-brand">
+            <img src="{{ url_for('static', filename='images/forensic_hero_logo.png') }}" alt="Logo">
+            <span class="nav-brand-text">FORENSIC AI</span>
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('upload_file') }}" class="nav-link">Upload</a>
+            <a href="{{ url_for('admin_login') }}" class="nav-link active">🔒 Reports</a>
+        </div>
+        <div class="live-badge" id="liveBadge" title="Live server traffic">
+            <span class="live-dot"></span>
+            <span class="live-count" id="liveCount">-</span>
+            <span class="live-label">LIVE</span>
+            <span class="live-divider"></span>
+            <span class="total-visits">👁 <span class="total-count" id="totalCount">-</span></span>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-container">
+        {% for message in messages %}
+        <div class="flash-msg">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Login Card -->
+    <div class="login-container">
+        <div class="glass-card">
+            <div class="login-icon">🔐</div>
+            <div class="login-title">ADMIN ACCESS</div>
+            <div class="login-subtitle">Enter password to access forensic reports</div>
+
+            <form method="POST" action="{{ url_for('admin_login', next=request.args.get('next', '')) }}" id="loginForm">
+                <div class="password-field-wrap">
+                    <input type="password" name="password" class="password-input" id="passwordInput"
+                           placeholder="Enter admin password" autofocus required autocomplete="current-password">
+                    <button type="button" class="toggle-password" id="togglePassword" title="Show/hide password">👁</button>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    🔓 AUTHENTICATE
+                </button>
+            </form>
+
+            <div style="text-align:center;">
+                <div class="security-badge">
+                    <span class="security-dot"></span>
+                    ENCRYPTED SESSION
+                </div>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <a href="{{ url_for('upload_file') }}">← Back to Analyzer</a>
+        </div>
+    </div>
+
+    <div style="height:60px;"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/three-scene.js') }}"></script>
+
+<script>
+// Toggle password visibility
+document.getElementById('togglePassword').addEventListener('click', function() {
+    const input = document.getElementById('passwordInput');
+    if (input.type === 'password') {
+        input.type = 'text';
+        this.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        this.textContent = '👁';
+    }
+});
+
+// Shake animation on wrong password (if flash has error)
+const flashMsgs = document.querySelectorAll('.flash-msg');
+flashMsgs.forEach(m => {
+    if (m.textContent.includes('❌')) {
+        document.getElementById('passwordInput').style.borderColor = 'var(--danger)';
+        document.getElementById('passwordInput').style.boxShadow = '0 0 20px rgba(255,77,106,0.2)';
+        setTimeout(() => {
+            document.getElementById('passwordInput').style.borderColor = '';
+            document.getElementById('passwordInput').style.boxShadow = '';
+        }, 2000);
+    }
+});
+
+// Live visitor counter
+function updateVisitorCount() {
+    fetch('/api/visitors').then(r => r.json()).then(data => {
+        document.getElementById('liveCount').textContent = data.live;
+        document.getElementById('totalCount').textContent = data.total;
+    }).catch(() => {});
+}
+updateVisitorCount();
+setInterval(updateVisitorCount, 3000);
+</script>
+
+</body>
+</html>

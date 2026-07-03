@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saved Reports — Forensic AI</title>
+    <title>Reports Database — Forensic Consistency & Evidence Validator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <style>
         .risk-pill { padding:4px 14px; border-radius:20px; font-size:0.72rem; font-weight:700; font-family:'Orbitron',monospace; letter-spacing:0.05em; }
@@ -40,8 +40,8 @@
 
     <div class="page-hero">
         <div class="section-label" style="justify-content:center;">Database</div>
-        <h1>Saved Forensic Reports</h1>
-        <p>Browse all analyzed reports with tampering risk and consistency scores.</p>
+        <h1>Forensic Report Database</h1>
+        <p>Browse all validated reports with consistency scores and tampering risk assessment.</p>
     </div>
 
     <!-- Stats -->
@@ -140,7 +140,7 @@ function updateVisitorCount() {
     }).catch(() => {});
 }
 updateVisitorCount();
-setInterval(updateVisitorCount, 10000);
+setInterval(updateVisitorCount, 3000);
 </script>
 
 </body>
