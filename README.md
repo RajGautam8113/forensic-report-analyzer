@@ -133,7 +133,7 @@ Rule-based validation systems
 NLP-based entity extraction
 OCR-based document digitization
 
-It serves as a decision-support prototype for forensic analysis systems, bridging the gap between unstructured medical reports and structured digital intelligence.
+
 
 📜 License
 
