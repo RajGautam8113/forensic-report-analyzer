@@ -147,6 +147,37 @@
         {% endif %}
         {% endif %}
 
+        <!-- Consistency Analysis (Upgrade 3) -->
+        {% if consistency_result %}
+        <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.85s both;">
+            <div class="section-label">🧪 Consistency Engine</div>
+            <div style="display:flex; gap:20px; align-items:center; margin:12px 0;">
+                <div style="font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; color:{% if consistency_result.consistency_score >= 70 %}var(--success){% elif consistency_result.consistency_score >= 40 %}var(--warning){% else %}var(--danger){% endif %};">{{ consistency_result.consistency_score|round|int }}%</div>
+                <div>
+                    <div style="font-size:0.82rem; color:var(--text-primary);">Confidence: <strong>{{ consistency_result.confidence }}</strong></div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">{{ consistency_result.checks_passed }}/{{ consistency_result.checks_total }} checks passed</div>
+                </div>
+            </div>
+            {% if consistency_result.flags %}
+            {% for flag in consistency_result.flags %}
+            <div style="padding:10px 14px; margin-bottom:6px; border-radius:var(--radius-sm); border-left:3px solid {% if flag.severity == 'CRITICAL' %}var(--danger){% elif flag.severity == 'HIGH' %}#ff8c00{% else %}var(--warning){% endif %}; background:rgba(0,0,0,0.15);">
+                <div style="font-weight:700; font-size:0.83rem;">{{ flag.message }} <span style="font-size:0.68rem; opacity:0.6;">[{{ flag.severity }}]</span></div>
+                {% if flag.explanation %}
+                <details style="margin-top:4px;">
+                    <summary style="font-size:0.72rem; color:var(--accent); cursor:pointer;">💡 Why this result?</summary>
+                    <div style="padding:6px 10px; margin-top:4px; font-size:0.78rem; color:var(--text-muted); background:rgba(0,229,255,0.03); border-radius:var(--radius-sm);">
+                        {% for line in flag.explanation %}<div style="padding:1px 0;">• {{ line }}</div>{% endfor %}
+                    </div>
+                </details>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="color:var(--success); font-size:0.85rem;">✅ All checks passed</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Report Details -->
         <div class="glass-card" style="margin-bottom:24px; animation:fadeInUp 0.7s both;">
             <div class="section-label">Report Data</div>

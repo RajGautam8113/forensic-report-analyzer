@@ -595,12 +595,28 @@ def report_detail(report_id):
     verification = models.get_verification(report_id)
     evidence_media = models.get_evidence_media(report_id)
 
+    # Parse stored consistency data (Upgrade 3)
+    consistency_result = None
+    if report.get('validation_flags_json'):
+        try:
+            flags = json.loads(report['validation_flags_json'])
+            consistency_result = {
+                'consistency_score': report.get('consistency_score') or 0,
+                'confidence': report.get('confidence_level') or 'Medium',
+                'flags': flags,
+                'checks_passed': 6 - len(set(f.get('type') for f in flags)),
+                'checks_total': 6,
+            }
+        except Exception:
+            pass
+
     return render_template(
         'report_detail.html',
         report=report,
         body_conditions=body_conditions,
         verification=verification,
         evidence_media=evidence_media,
+        consistency_result=consistency_result,
     )
 
 
